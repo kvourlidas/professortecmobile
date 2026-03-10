@@ -3,7 +3,6 @@ import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';
@@ -16,17 +15,18 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const scheme = colorScheme ?? 'light';
+  const scheme      = colorScheme ?? 'light';
+  const C           = Colors[scheme];
 
   const navTheme = {
     dark: scheme === 'dark',
     colors: {
-      primary: Colors[scheme].tint,
-      background: Colors[scheme].background,
-      card: Colors[scheme].background,
-      text: Colors[scheme].text,
-      border: 'transparent',
-      notification: Colors[scheme].tint,
+      primary:      C.tint,
+      background:   C.background,
+      card:         C.surface,       // header / modal cards match surface
+      text:         C.text,
+      border:       C.border,
+      notification: C.tint,
     },
     fonts: {} as any,
   };
@@ -35,17 +35,26 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={navTheme as any}>
         <SafeAreaView
-          style={{ flex: 1, backgroundColor: Colors[scheme].background }}
+          style={{ flex: 1, backgroundColor: C.background }}
           edges={['top', 'left', 'right']}
         >
           <AuthProvider>
-            <Stack>
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack
+              screenOptions={{
+                // Shared defaults for all pushed screens
+                headerStyle:      { backgroundColor: C.surface },
+                headerTintColor:  C.tint,
+                headerTitleStyle: { color: C.text, fontWeight: '700', fontSize: 16 },
+                headerShadowVisible: false,
+                contentStyle:     { backgroundColor: C.background },
+              }}
+            >
+              <Stack.Screen name="(auth)"          options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)"          options={{ headerShown: false }} />
+              <Stack.Screen name="notifications"   options={{ headerShown: false }} />
             </Stack>
           </AuthProvider>
         </SafeAreaView>
-
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       </ThemeProvider>
     </SafeAreaProvider>

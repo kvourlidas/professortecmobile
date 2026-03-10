@@ -1,63 +1,117 @@
 // constants/theme.ts
 import { Platform } from 'react-native';
 
-const tintColorLight = '#2563eb'; // closer to your web primary
-const tintColorDark = '#60a5fa';
+// ─── Accent ───────────────────────────────────────────────────────────────────
+// Indigo-blue: crisp, trustworthy, premium
+const tintLight = '#4F6EF7';
+const tintDark  = '#7B96FF';
 
 export const Colors = {
   light: {
-    // core
-    text: '#11181C',
-    background: '#F3F6FB',     // page bg (like web)
-    surface: '#FFFFFF',        // cards/modals
-    tint: tintColorLight,
-
-    // ui
-    border: 'rgba(15, 23, 42, 0.10)',
-    mutedText: 'rgba(17, 24, 39, 0.70)',
-    icon: '#687076',
-
-    // tabs
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    // Page background — warm off-white, never harsh
+    background:    '#F7F8FC',
+    // Card / modal surface — pure white with micro-lift
+    surface:       '#FFFFFF',
+    // Primary accent
+    tint:          tintLight,
+    // Primary text — near-black, slightly warm
+    text:          '#0F1117',
+    // Secondary / muted text
+    mutedText:     'rgba(15, 17, 23, 0.50)',
+    // Dividers / card borders — barely-there
+    border:        'rgba(15, 17, 23, 0.08)',
+    // Icon default (tab bar, decorative)
+    icon:          'rgba(15, 17, 23, 0.38)',
+    // Tab bar
+    tabIconDefault:  'rgba(15, 17, 23, 0.38)',
+    tabIconSelected: tintLight,
+    // Semantic colours (kept consistent with dark)
+    success:       '#22C55E',
+    danger:        '#F87171',
+    warning:       '#FBBF24',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#253649',     // your web page background
-    surface: '#1f2d3d',        // cards feel like sidebar surface
-    tint: tintColorDark,
-
-    border: 'rgba(148, 163, 184, 0.20)',
-    mutedText: 'rgba(236, 237, 238, 0.75)',
-    icon: '#9BA1A6',
-
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    // Deep cool-charcoal — not pure black, not navy
+    background:    '#111318',
+    // Slightly lighter surface for cards
+    surface:       '#1C1F28',
+    tint:          tintDark,
+    text:          '#EEF0F7',
+    mutedText:     'rgba(238, 240, 247, 0.48)',
+    border:        'rgba(238, 240, 247, 0.09)',
+    icon:          'rgba(238, 240, 247, 0.36)',
+    tabIconDefault:  'rgba(238, 240, 247, 0.36)',
+    tabIconSelected: tintDark,
+    success:       '#4ADE80',
+    danger:        '#F87171',
+    warning:       '#FCD34D',
   },
 } as const;
 
+// ─── Border-radius scale ───────────────────────────────────────────────────────
 export const Radius = {
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 22,
+  xs:  6,
+  sm:  10,
+  md:  14,
+  lg:  18,
+  xl:  24,
+  '2xl': 32,
 } as const;
 
+// ─── Spacing scale ─────────────────────────────────────────────────────────────
 export const Spacing = {
-  xs: 6,
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 24,
+  xs:  4,
+  sm:  8,
+  md:  14,
+  lg:  20,
+  xl:  28,
+  '2xl': 40,
 } as const;
 
+// ─── Typography ────────────────────────────────────────────────────────────────
 export const Fonts = Platform.select({
-  ios: { sans: 'system-ui', serif: 'ui-serif', rounded: 'ui-rounded', mono: 'ui-monospace' },
-  default: { sans: 'normal', serif: 'serif', rounded: 'normal', mono: 'monospace' },
+  ios: {
+    sans:    'system-ui',
+    serif:   'ui-serif',
+    rounded: 'ui-rounded',
+    mono:    'ui-monospace',
+  },
+  default: {
+    sans:    'normal',
+    serif:   'serif',
+    rounded: 'normal',
+    mono:    'monospace',
+  },
   web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    sans:    "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    serif:   "Georgia, 'Times New Roman', serif",
+    rounded: "'SF Pro Rounded', sans-serif",
+    mono:    "SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace",
   },
 });
+
+// ─── Shadow presets ────────────────────────────────────────────────────────────
+export const Shadow = {
+  none: {},
+  sm: {
+    shadowColor:   '#000',
+    shadowOpacity: 0.06,
+    shadowRadius:  6,
+    shadowOffset:  { width: 0, height: 2 },
+    elevation:     2,
+  },
+  md: {
+    shadowColor:   '#000',
+    shadowOpacity: 0.09,
+    shadowRadius:  12,
+    shadowOffset:  { width: 0, height: 4 },
+    elevation:     5,
+  },
+  lg: {
+    shadowColor:   '#000',
+    shadowOpacity: 0.13,
+    shadowRadius:  20,
+    shadowOffset:  { width: 0, height: 8 },
+    elevation:     10,
+  },
+} as const;
