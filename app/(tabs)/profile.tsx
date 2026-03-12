@@ -15,6 +15,7 @@ import {
 import AcademicInfoCard from '@/components/profile/AcademicInfoCard';
 import ContactInfoCard from '@/components/profile/ContactInfoCard';
 import ProfileHeader from '@/components/profile/ProfileHeader';
+import SchoolInfoCard from '@/components/profile/SchoolInfoCard';
 import StudentPackageCard from '@/components/profile/StudentPackageCard';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -189,6 +190,11 @@ export default function ProfileScreen() {
               <StudentPackageCard studentId={student.id} schoolId={student.school_id} />
             ) : null}
 
+            {/* ── School info — passes school_id from the already-loaded student row ── */}
+            {student?.school_id ? (
+              <SchoolInfoCard schoolId={student.school_id} />
+            ) : null}
+
             {/* ── Logout button ── */}
             <Pressable
               onPress={handleLogoutPress}
@@ -324,16 +330,16 @@ const styles = StyleSheet.create({
 
   // ── Logout button ────────────────────────────────────────────────────────
   logoutBtn: {
-    marginHorizontal: Spacing.lg,
-    marginTop:        Spacing.md,
-    borderRadius:     Radius.xl,
-    borderWidth:      1,
-    paddingVertical:  13,
+    marginHorizontal:  Spacing.lg,
+    marginTop:         Spacing.md,
+    borderRadius:      Radius.xl,
+    borderWidth:       1,
+    paddingVertical:   13,
     paddingHorizontal: Spacing.md,
-    flexDirection:    'row',
-    alignItems:       'center',
-    justifyContent:   'center',
-    gap:              Spacing.sm,
+    flexDirection:     'row',
+    alignItems:        'center',
+    justifyContent:    'center',
+    gap:               Spacing.sm,
   },
   logoutText: { fontSize: 13, fontWeight: '700' },
 

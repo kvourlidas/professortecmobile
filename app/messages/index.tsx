@@ -1,7 +1,7 @@
 // app/messages/index.tsx
-import { router, Stack } from 'expo-router';
+import { router, Stack, useFocusEffect } from 'expo-router';
 import { ChevronLeft, RefreshCw, Send } from 'lucide-react-native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -29,13 +29,15 @@ type MsgRow = {
 };
 
 type ThreadMeta = {
-  school_id:  string;
-  student_id: string;
+  school_id:    string;
+  student_id:   string;
+  school_name:  string;
+  student_name: string;
 };
 
 type ListRow =
   | { type: 'divider'; id: string; label: string }
-  | { type: 'msg';     id: string; item: MsgRow  };
+  | { type: 'msg';     id: string; item: MsgRow; showAvatar: boolean };
 
 function formatTime(iso: string): string {
   try {
@@ -58,6 +60,15 @@ function formatDay(iso: string): string {
   } catch { return ''; }
 }
 
+function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
 export default function MessagesScreen() {
   const bg      = useThemeColor({}, 'background');
   const surface = useThemeColor({}, 'surface');
@@ -73,8 +84,6 @@ export default function MessagesScreen() {
   const [draft,      setDraft]      = useState('');
   const [sending,    setSending]    = useState(false);
 
-  // ✅ Untyped ref — avoids the union generic conflict entirely.
-  //    We only ever call .scrollToEnd() on it which is available on any FlatList.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const listRef       = useRef<any>(null);
   const isAtBottomRef = useRef(true);
@@ -119,16 +128,36 @@ export default function MessagesScreen() {
     try {
       const { data: tid, error: tErr } = await supabase.rpc('get_or_create_message_thread');
       if (tErr) throw tErr;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const id = typeof tid === 'string' ? tid : (tid as any);
       if (!id) throw new Error('No thread id');
       setThreadId(id);
       await markThreadRead(id);
 
+      // Fetch thread + school name + student name via joins
       const { data: mt, error: mtErr } = await supabase
-        .from('message_threads').select('school_id, student_id').eq('id', id).maybeSingle();
-      setThreadMeta((!mtErr && mt?.school_id && mt?.student_id)
-        ? { school_id: mt.school_id, student_id: mt.student_id }
-        : null);
+        .from('message_threads')
+        .select(`
+          school_id,
+          student_id,
+          schools ( name ),
+          students ( full_name )
+        `)
+        .eq('id', id)
+        .maybeSingle();
+
+      if (!mtErr && mt?.school_id && mt?.student_id) {
+        setThreadMeta({
+          school_id:    mt.school_id,
+          student_id:   mt.student_id,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          school_name:  (mt as any).schools?.name       ?? 'Σχολείο',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          student_name: (mt as any).students?.full_name ?? 'Μαθητής',
+        });
+      } else {
+        setThreadMeta(null);
+      }
 
       await fetchMessages(id, false);
       isAtBottomRef.current = true;
@@ -195,16 +224,35 @@ export default function MessagesScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId]);
 
+  // ── Auto-refresh every 60 s while screen is focused ──
+  useFocusEffect(
+    useCallback(() => {
+      if (!threadId) return;
+      const interval = setInterval(() => {
+        fetchMessages(threadId, true).catch((e) =>
+          console.error('auto-refresh error:', e),
+        );
+      }, 60_000);
+      return () => clearInterval(interval);
+    }, [threadId]),
+  );
+
+  // Build list rows — avatar shown only on the LAST message of a consecutive run
   const groupedMessages = useMemo((): ListRow[] => {
     const result: ListRow[] = [];
     let lastDay = '';
-    for (const msg of messages) {
+    for (let i = 0; i < messages.length; i++) {
+      const msg  = messages[i];
+      const next = messages[i + 1];
+
       const day = formatDay(msg.created_at);
       if (day !== lastDay) {
         result.push({ type: 'divider', id: `div-${msg.created_at}-${day}`, label: day });
         lastDay = day;
       }
-      result.push({ type: 'msg', id: msg.id, item: msg });
+
+      const showAvatar = !next || next.sender_role !== msg.sender_role;
+      result.push({ type: 'msg', id: msg.id, item: msg, showAvatar });
     }
     return result;
   }, [messages]);
@@ -220,15 +268,27 @@ export default function MessagesScreen() {
       );
     }
 
-    const msg  = item.item;
-    const mine = msg.sender_role === 'student';
+    const msg        = item.item;
+    const mine       = msg.sender_role === 'student';
+    const showAvatar = item.showAvatar;
+    const initials   = showAvatar
+      ? getInitials(mine
+          ? (threadMeta?.student_name ?? 'Μ')
+          : (threadMeta?.school_name  ?? 'Σ'))
+      : '';
 
     return (
       <View style={[styles.bubbleRow, { justifyContent: mine ? 'flex-end' : 'flex-start' }]}>
+
+        {/* Left avatar slot — school messages */}
         {!mine && (
-          <View style={[styles.avatarDot, { backgroundColor: tint + '28', borderColor: tint + '40' }]}>
-            <ThemedText style={[styles.avatarLetter, { color: tint }]}>Σ</ThemedText>
-          </View>
+          showAvatar ? (
+            <View style={[styles.avatarDot, { backgroundColor: tint + '22', borderColor: tint + '44' }]}>
+              <ThemedText style={[styles.avatarLetter, { color: tint }]}>{initials}</ThemedText>
+            </View>
+          ) : (
+            <View style={styles.avatarSpacer} />
+          )
         )}
 
         <View style={styles.bubbleCol}>
@@ -242,13 +302,28 @@ export default function MessagesScreen() {
               {msg.body}
             </ThemedText>
           </View>
-          <ThemedText style={[
-            styles.bubbleTime,
-            { color: muted, alignSelf: mine ? 'flex-end' : 'flex-start' },
-          ]}>
-            {formatTime(msg.created_at)}
-          </ThemedText>
+
+          {/* Timestamp only below the last bubble in a run */}
+          {showAvatar && (
+            <ThemedText style={[
+              styles.bubbleTime,
+              { color: muted, alignSelf: mine ? 'flex-end' : 'flex-start' },
+            ]}>
+              {formatTime(msg.created_at)}
+            </ThemedText>
+          )}
         </View>
+
+        {/* Right avatar slot — student messages */}
+        {mine && (
+          showAvatar ? (
+            <View style={[styles.avatarDot, { backgroundColor: tint + '22', borderColor: tint + '44' }]}>
+              <ThemedText style={[styles.avatarLetter, { color: tint }]}>{initials}</ThemedText>
+            </View>
+          ) : (
+            <View style={styles.avatarSpacer} />
+          )
+        )}
       </View>
     );
   };
@@ -262,13 +337,13 @@ export default function MessagesScreen() {
         <Pressable
           onPress={() => router.back()}
           hitSlop={10}
-          style={({ pressed }) => [styles.headerBtn, { opacity: pressed ? 0.65 : 1 }]}
+          style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.65 : 1 }]}
         >
-          <ChevronLeft size={20} color={text} strokeWidth={2.2} />
-          <ThemedText style={[styles.backLabel, { color: text }]}>Πίσω</ThemedText>
+          <ChevronLeft size={22} color={text} strokeWidth={2.2} />
+          <ThemedText style={[styles.headerTitle, { color: text }]} numberOfLines={1}>
+            {threadMeta?.school_name ?? 'Μηνύματα'}
+          </ThemedText>
         </Pressable>
-
-        <ThemedText style={[styles.headerTitle, { color: text }]}>Μηνύματα</ThemedText>
 
         <Pressable
           onPress={handleRefresh}
@@ -283,7 +358,7 @@ export default function MessagesScreen() {
       </View>
 
       {/* ── Message list ── */}
-      <View style={[styles.listWrap, { backgroundColor: surface, borderColor: border }]}>
+      <View style={styles.listWrap}>
         {loading ? (
           <View style={styles.center}>
             <ActivityIndicator color={tint} />
@@ -309,18 +384,18 @@ export default function MessagesScreen() {
         )}
       </View>
 
-      {/* ── Composer ── */}
+      {/* ── Composer — moves up with keyboard ── */}
       <KeyboardAvoidingView
-        behavior={Platform.select({ ios: 'padding', default: undefined })}
-        keyboardVerticalOffset={Platform.select({ ios: 90, default: 0 })}
+        behavior={Platform.select({ ios: 'padding', android: 'height' })}
+        keyboardVerticalOffset={Platform.select({ ios: 0, android: 0 })}
       >
-        <View style={[styles.composer, { borderColor: border, backgroundColor: surface }]}>
+        <View style={[styles.composer, { borderTopColor: border, backgroundColor: bg }]}>
           <TextInput
             value={draft}
             onChangeText={setDraft}
             placeholder="Γράψε μήνυμα…"
             placeholderTextColor={muted}
-            style={[styles.input, { color: text }]}
+            style={[styles.input, { color: text, backgroundColor: surface, borderColor: border }]}
             multiline
           />
           <Pressable
@@ -349,10 +424,10 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex:       1,
-    gap:        Spacing.sm,
     paddingTop: Platform.select({ ios: 56, default: Spacing.xl }),
   },
 
+  // ── Header ──
   header: {
     flexDirection:     'row',
     alignItems:        'center',
@@ -361,15 +436,19 @@ const styles = StyleSheet.create({
     paddingBottom:     Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  headerBtn: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               4,
-    paddingVertical:   4,
-    paddingHorizontal: 2,
+  backBtn: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           4,
+    flex:          1,
+    paddingRight:  Spacing.md,
   },
-  backLabel:     { fontSize: 14, fontWeight: '600' },
-  headerTitle:   { fontSize: 17, fontWeight: '700', letterSpacing: -0.2 },
+  headerTitle: {
+    fontSize:      17,
+    fontWeight:    '700',
+    letterSpacing: -0.2,
+    flexShrink:    1,
+  },
   headerIconBtn: {
     width:          34,
     height:         34,
@@ -379,22 +458,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // ── Full-page list ──
   listWrap: {
-    flex:             1,
-    marginHorizontal: Spacing.lg,
-    borderRadius:     Radius.xl,
-    borderWidth:      StyleSheet.hairlineWidth,
-    overflow:         'hidden',
-    shadowColor:      '#000',
-    shadowOpacity:    0.06,
-    shadowRadius:     8,
-    shadowOffset:     { width: 0, height: 2 },
-    elevation:        2,
+    flex: 1,
   },
   listContent: {
-    padding:       Spacing.md,
-    paddingBottom: Spacing.lg,
-    gap:           4,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical:   Spacing.md,
+    gap:               2,
   },
 
   center: {
@@ -417,21 +488,26 @@ const styles = StyleSheet.create({
   bubbleRow: {
     flexDirection: 'row',
     alignItems:    'flex-end',
-    gap:           Spacing.sm,
-    marginBottom:  4,
+    gap:           6,
+    marginBottom:  2,
   },
   avatarDot: {
-    width:          28,
-    height:         28,
-    borderRadius:   14,
+    width:          30,
+    height:         30,
+    borderRadius:   15,
     borderWidth:    1,
     alignItems:     'center',
     justifyContent: 'center',
     flexShrink:     0,
-    marginBottom:   18,
+    marginBottom:   18, // lines up with the timestamp below the bubble
   },
-  avatarLetter: { fontSize: 11, fontWeight: '800' },
-  bubbleCol:    { maxWidth: '78%', gap: 3 },
+  // Invisible spacer keeps bubbles aligned when avatar is hidden
+  avatarSpacer: {
+    width:      30,
+    flexShrink: 0,
+  },
+  avatarLetter: { fontSize: 10, fontWeight: '800' },
+  bubbleCol:    { maxWidth: '75%', gap: 3 },
   bubble: {
     borderWidth:       1,
     borderRadius:      Radius.xl,
@@ -441,20 +517,15 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: 14, fontWeight: '400', lineHeight: 20 },
   bubbleTime: { fontSize: 10, fontWeight: '500', marginHorizontal: 4 },
 
+  // ── Composer ──
   composer: {
-    flexDirection:  'row',
-    alignItems:     'flex-end',
-    gap:            Spacing.sm,
-    margin:         Spacing.lg,
-    marginTop:      Spacing.sm,
-    borderWidth:    StyleSheet.hairlineWidth,
-    borderRadius:   Radius.xl,
-    padding:        Spacing.sm,
-    shadowColor:    '#000',
-    shadowOpacity:  0.06,
-    shadowRadius:   8,
-    shadowOffset:   { width: 0, height: 2 },
-    elevation:      3,
+    flexDirection:     'row',
+    alignItems:        'flex-end',
+    gap:               Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical:   Spacing.sm,
+    paddingBottom:     Platform.select({ ios: Spacing.lg, default: Spacing.sm }),
+    borderTopWidth:    StyleSheet.hairlineWidth,
   },
   input: {
     flex:              1,
@@ -462,8 +533,10 @@ const styles = StyleSheet.create({
     maxHeight:         120,
     fontSize:          14,
     fontWeight:        '400',
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     paddingVertical:   10,
+    borderRadius:      Radius.xl,
+    borderWidth:       StyleSheet.hairlineWidth,
   },
   sendBtn: {
     width:          40,

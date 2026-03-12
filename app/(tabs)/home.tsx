@@ -5,10 +5,12 @@ import { router } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Platform,
   Pressable,
   StyleSheet,
+  useColorScheme,
   View,
 } from 'react-native';
 
@@ -24,16 +26,22 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { supabase } from '@/lib/supabaseClient';
 
+const LOGO_LIGHT = require('@/assets/images/edra-primary-transparent-light(PNG)(1).png');
+const LOGO_DARK  = require('@/assets/images/edra-primary-transparent-dark(PNG).png');
+
 type ResultKind = 'success' | 'error';
 const FEEDBACK_CACHE_KEY = 'pt_student_feedback_v1';
 
 export default function HomeScreen() {
-  const bg       = useThemeColor({}, 'background');
-  const surface  = useThemeColor({}, 'surface');
-  const text     = useThemeColor({}, 'text');
-  const muted    = useThemeColor({}, 'mutedText');
-  const border   = useThemeColor({}, 'border');
-  const tint     = useThemeColor({}, 'tint');
+  const bg      = useThemeColor({}, 'background');
+  const surface = useThemeColor({}, 'surface');
+  const text    = useThemeColor({}, 'text');
+  const muted   = useThemeColor({}, 'mutedText');
+  const border  = useThemeColor({}, 'border');
+  const tint    = useThemeColor({}, 'tint');
+
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const { user } = useAuth();
 
@@ -188,12 +196,20 @@ export default function HomeScreen() {
 
       {/* ── Top bar ── */}
       <View style={styles.topBar}>
-        <View>
-          <ThemedText style={[styles.greeting, { color: muted }]}>Καλωσήρθες</ThemedText>
-          <ThemedText style={styles.appTitle}>ProfessorTec</ThemedText>
+
+        {/* Left spacer — same width as bell so logo stays truly centered */}
+        <View style={styles.bellPlaceholder} />
+
+        {/* Center — logo overflows the 52px header above and below */}
+        <View style={styles.logoWrap}>
+          <Image
+            source={isDark ? LOGO_DARK : LOGO_LIGHT}
+            style={styles.logo}
+            resizeMode="cover"
+          />
         </View>
 
-        {/* Notification bell */}
+        {/* Right — notification bell */}
         <Pressable
           onPress={() => router.push('/notifications')}
           style={({ pressed }) => [
@@ -205,7 +221,6 @@ export default function HomeScreen() {
           ]}
         >
           <Bell size={18} color={tint} strokeWidth={2} />
-
           {unreadCount > 0 && (
             <View style={[styles.badge, { backgroundColor: tint }]}>
               <ThemedText style={styles.badgeText}>
@@ -252,11 +267,9 @@ export default function HomeScreen() {
                 {resultTitle}
               </ThemedText>
             </View>
-
             <ThemedText style={[styles.modalMsg, { color: muted }]}>
               {resultMsg}
             </ThemedText>
-
             <View style={styles.modalActions}>
               <Pressable
                 onPress={closeResult}
@@ -280,10 +293,12 @@ export default function HomeScreen() {
   );
 }
 
+const BELL_SIZE = 42;
+
 const styles = StyleSheet.create({
   screen: {
-    flex:    1,
-    padding: Spacing.lg,
+    flex:       1,
+    padding:    Spacing.lg,
     paddingTop: Platform.select({ ios: 56, default: Spacing.xl }),
   },
 
@@ -291,55 +306,62 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection:  'row',
     alignItems:     'center',
-    justifyContent: 'space-between',
+    height:         52,
     marginBottom:   Spacing.lg,
-  },
-  greeting: {
-    fontSize:   12,
-    fontWeight: '500',
-    letterSpacing: 0.3,
-    marginBottom: 2,
-  },
-  appTitle: {
-    fontSize:      22,
-    fontWeight:    '800',
-    letterSpacing: -0.4,
+    overflow:       'visible',
   },
 
+  bellPlaceholder: {
+    width: BELL_SIZE,
+  },
+
+  logoWrap: {
+    flex:           1,
+    alignItems:     'center',
+    justifyContent: 'center',
+    overflow:       'visible',
+  },
+
+  logo: {
+    width:  220,
+    height: 52,
+  },
+
+  // ── Bell ─────────────────────────────────────────────────────────────────
   bellBtn: {
-    width:          42,
-    height:         42,
-    borderRadius:   21,
+    width:          BELL_SIZE,
+    height:         BELL_SIZE,
+    borderRadius:   BELL_SIZE / 2,
     borderWidth:    StyleSheet.hairlineWidth,
     alignItems:     'center',
     justifyContent: 'center',
   },
   badge: {
-    position:      'absolute',
-    top:           -5,
-    right:         -5,
-    minWidth:      18,
-    height:        18,
-    borderRadius:  9,
-    alignItems:    'center',
-    justifyContent: 'center',
+    position:          'absolute',
+    top:               -5,
+    right:             -5,
+    minWidth:          18,
+    height:            18,
+    borderRadius:      9,
+    alignItems:        'center',
+    justifyContent:    'center',
     paddingHorizontal: 4,
   },
   badgeText: {
-    fontSize:   10,
-    fontWeight: '800',
-    color:      '#fff',
+    fontSize:           10,
+    fontWeight:         '800',
+    color:              '#fff',
     includeFontPadding: false,
   },
 
   // ── Loading box ────────────────────────────────────────────────────────────
   loadingBox: {
-    borderWidth:    StyleSheet.hairlineWidth,
-    borderRadius:   Radius.xl,
-    padding:        Spacing.lg,
-    flexDirection:  'row',
-    alignItems:     'center',
-    gap:            Spacing.sm,
+    borderWidth:   StyleSheet.hairlineWidth,
+    borderRadius:  Radius.xl,
+    padding:       Spacing.lg,
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           Spacing.sm,
   },
   loadingText: {
     fontSize:   13,
@@ -355,11 +377,11 @@ const styles = StyleSheet.create({
     padding:         Spacing.lg,
   },
   modalCard: {
-    width:        '100%',
-    maxWidth:     380,
-    borderRadius: Radius.xl,
-    borderWidth:  Platform.select({ ios: StyleSheet.hairlineWidth, default: 1 }),
-    padding:      Spacing.lg,
+    width:         '100%',
+    maxWidth:      380,
+    borderRadius:  Radius.xl,
+    borderWidth:   Platform.select({ ios: StyleSheet.hairlineWidth, default: 1 }),
+    padding:       Spacing.lg,
     shadowColor:   '#000',
     shadowOpacity: 0.18,
     shadowRadius:  24,
@@ -380,8 +402,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalTitle: {
-    fontSize:   16,
-    fontWeight: '700',
+    fontSize:      16,
+    fontWeight:    '700',
     letterSpacing: -0.2,
   },
   modalMsg: {
