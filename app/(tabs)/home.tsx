@@ -9,6 +9,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   useColorScheme,
   View,
@@ -16,6 +17,7 @@ import {
 
 import { Bell, CheckCircle2, TriangleAlert } from 'lucide-react-native';
 
+import ClassInfoCard from '@/components/home/ClassInfoCard';
 import NextSessionCard from '@/components/home/NextSessionCard';
 import SchoolFeedbackCard from '@/components/home/SchoolFeedbackCard';
 import SchoolMessagesCard from '@/components/home/SchoolMessagesCard';
@@ -232,28 +234,34 @@ export default function HomeScreen() {
       </View>
 
       {/* ── Content ── */}
-      <NextSessionCard />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <NextSessionCard />
 
-      <View style={{ marginTop: Spacing.md }}>
-        {fbLoading ? (
-          <View style={[styles.loadingBox, { borderColor: border, backgroundColor: surface }]}>
-            <ActivityIndicator color={tint} size="small" />
-            <ThemedText style={[styles.loadingText, { color: muted }]}>
-              Φόρτωση feedback…
-            </ThemedText>
-          </View>
-        ) : (
-          <SchoolFeedbackCard
-            initialRating={initialRating}
-            initialFeedback={initialFeedback}
-            onSubmit={async ({ rating, feedback }) => submitFeedback(rating, feedback)}
-          />
-        )}
-      </View>
+        <View style={{ marginTop: Spacing.md }}>
+          <SchoolMessagesCard />
+        </View>
 
-      <View style={{ marginTop: Spacing.md }}>
-        <SchoolMessagesCard />
-      </View>
+        <View style={{ marginTop: Spacing.md }}>
+          {fbLoading ? (
+            <View style={[styles.loadingBox, { borderColor: border, backgroundColor: surface }]}>
+              <ActivityIndicator color={tint} size="small" />
+              <ThemedText style={[styles.loadingText, { color: muted }]}>
+                Φόρτωση feedback…
+              </ThemedText>
+            </View>
+          ) : (
+            <SchoolFeedbackCard
+              initialRating={initialRating}
+              initialFeedback={initialFeedback}
+              onSubmit={async ({ rating, feedback }) => submitFeedback(rating, feedback)}
+            />
+          )}
+        </View>
+
+        <View style={{ marginTop: Spacing.md }}>
+          <ClassInfoCard />
+        </View>
+      </ScrollView>
 
       {/* ── Result modal ── */}
       <Modal transparent visible={resultOpen} animationType="fade" onRequestClose={closeResult}>
@@ -300,6 +308,9 @@ const styles = StyleSheet.create({
     flex:       1,
     padding:    Spacing.lg,
     paddingTop: Platform.select({ ios: 56, default: Spacing.xl }),
+  },
+  content: {
+    paddingBottom: Spacing.xl,
   },
 
   // ── Top bar ───────────────────────────────────────────────────────────────

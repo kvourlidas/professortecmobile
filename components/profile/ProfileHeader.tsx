@@ -13,14 +13,13 @@ type Props = {
 
 export default function ProfileHeader({ fullName }: Props) {
   const tint    = useThemeColor({}, 'tint');
-  const surface = useThemeColor({}, 'surface');
   const muted   = useThemeColor({}, 'mutedText');
   const border  = useThemeColor({}, 'border');
 
   const initials = getInitials(fullName);
 
   return (
-    <View style={[styles.container, { backgroundColor: surface, borderBottomColor: border }]}>
+    <View style={[styles.container, { borderBottomColor: border }]}>
       {/* Avatar */}
       <View style={[styles.avatarRing, { borderColor: tint + '35' }]}>
         <View style={[styles.avatar, { backgroundColor: tint + '14' }]}>
@@ -31,15 +30,12 @@ export default function ProfileHeader({ fullName }: Props) {
       </View>
 
       {/* Name + role */}
-      <View style={styles.textBlock}>
-        <View style={[styles.rolePill, { backgroundColor: tint + '12', borderColor: tint + '25' }]}>
-          <ThemedText style={[styles.roleText, { color: tint }]}>ΜΑΘΗΤΗΣ</ThemedText>
-        </View>
-        <ThemedText style={styles.name} numberOfLines={2}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <ThemedText style={styles.name} numberOfLines={1}>
           {fullName}
         </ThemedText>
-        <ThemedText style={[styles.nameSub, { color: muted }]}>
-          Λογαριασμός μαθητή
+        <ThemedText style={[styles.roleText, { color: muted }]}>
+          Μαθητής
         </ThemedText>
       </View>
     </View>
@@ -50,61 +46,43 @@ const styles = StyleSheet.create({
   container: {
     flexDirection:     'row',
     alignItems:        'center',
-    gap:               Spacing.lg,
+    gap:               Spacing.md,
     paddingHorizontal: Spacing.lg,
-    paddingTop:        Spacing.xl,
-    paddingBottom:     Spacing.lg,
+    paddingVertical:   Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     marginBottom:      Spacing.sm,
   },
 
   avatarRing: {
-    width:          70,
-    height:         70,
-    borderRadius:   35,
-    borderWidth:    1.5,
+    width:          44,
+    height:         44,
+    borderRadius:   22,
+    borderWidth:    1,
     alignItems:     'center',
     justifyContent: 'center',
-    padding:        3,
+    padding:        2,
     flexShrink:     0,
   },
   avatar: {
-    width:          60,
-    height:         60,
-    borderRadius:   30,
+    width:          38,
+    height:         38,
+    borderRadius:   19,
     alignItems:     'center',
     justifyContent: 'center',
   },
   initials: {
-    fontSize:      22,
-    fontWeight:    '800',
-    letterSpacing: 0.5,
+    fontSize:      14,
+    fontWeight:    '700',
+    letterSpacing: 0.3,
   },
 
-  textBlock: {
-    flex: 1,
-    gap:  5,
-  },
-  rolePill: {
-    alignSelf:         'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical:   3,
-    borderRadius:      999,
-    borderWidth:       1,
+  name: {
+    fontSize:      15,
+    fontWeight:    '700',
+    letterSpacing: -0.2,
   },
   roleText: {
-    fontSize:      9,
-    fontWeight:    '700',
-    letterSpacing: 1.4,
-  },
-  name: {
-    fontSize:      19,
-    fontWeight:    '800',
-    lineHeight:    25,
-    letterSpacing: -0.3,
-  },
-  nameSub: {
-    fontSize:   11,
+    fontSize:   12,
     fontWeight: '400',
   },
 });

@@ -1,7 +1,14 @@
 // components/home/SchoolFeedbackCard.tsx
-import { Star } from 'lucide-react-native';
+import { Pencil, Star } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/Card';
@@ -16,6 +23,7 @@ type Props = {
 };
 
 const STAR_LABELS = ['', 'Κακό', 'Μέτριο', 'Καλό', 'Πολύ καλό', 'Εξαιρετικό'];
+const STAR_FILLED = '#FBBF24';
 
 export default function SchoolFeedbackCard({
   maxChars = 500,
@@ -30,6 +38,8 @@ export default function SchoolFeedbackCard({
   const surface = useThemeColor({}, 'surface');
   const bg      = useThemeColor({}, 'background');
 
+  // Modal state
+  const [modalOpen,  setModalOpen]  = useState(false);
   const [rating,     setRating]     = useState(initialRating);
   const [feedback,   setFeedback]   = useState(initialFeedback);
   const [submitting, setSubmitting] = useState(false);
@@ -43,122 +53,258 @@ export default function SchoolFeedbackCard({
   const remaining = useMemo(() => Math.max(0, maxChars - feedback.length), [feedback, maxChars]);
   const canSubmit = rating > 0 && trimmed.length > 0 && !submitting;
 
+  const hasExisting = initialRating > 0;
+
+  const openModal = () => {
+    setRating(initialRating);
+    setFeedback(initialFeedback);
+    setModalOpen(true);
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
     try {
       setSubmitting(true);
       await onSubmit?.({ rating, feedback: trimmed });
-      setRating(rating); setFeedback(trimmed);
+      setModalOpen(false);
     } finally { setSubmitting(false); }
   };
 
-  // Star fill colour — gold when filled
-  const starFilled  = '#FBBF24';
-  const starEmpty   = muted;
-
   return (
-    <Card elevation="sm">
-      {/* Title */}
-      <ThemedText style={[styles.title, { color: text }]}>
-        Αξιολόγησε το φροντιστήριό σου
-      </ThemedText>
+    <>
+      {/* ── Compact read-only card ── */}
+      <Card elevation="sm">
+        <View style={styles.cardRow}>
+          <View style={styles.cardLeft}>
+            <ThemedText style={[styles.cardTitle, { color: text }]}>
+              Αξιολόγησή σου
+            </ThemedText>
 
-      {/* Stars + label */}
-      <View style={styles.starsBlock}>
-        <View style={styles.starsRow}>
-          {[1, 2, 3, 4, 5].map((v) => {
-            const filled = v <= rating;
-            return (
-              <Pressable
-                key={v}
-                onPress={() => setRating(v)}
-                hitSlop={8}
-                style={({ pressed }) => [styles.starBtn, { opacity: pressed ? 0.7 : 1 }]}
-              >
-                <Star
-                  size={28}
-                  color={filled ? starFilled : starEmpty}
-                  fill={filled ? starFilled : 'transparent'}
-                  strokeWidth={1.8}
-                />
-              </Pressable>
-            );
-          })}
+            {hasExisting ? (
+              <>
+                {/* Stars display */}
+                <View style={styles.starsRow}>
+                  {[1, 2, 3, 4, 5].map((v) => (
+                    <Star
+                      key={v}
+                      size={14}
+                      color={v <= initialRating ? STAR_FILLED : muted}
+                      fill={v <= initialRating ? STAR_FILLED : 'transparent'}
+                      strokeWidth={1.8}
+                    />
+                  ))}
+                  <ThemedText style={[styles.starLabel, { color: STAR_FILLED }]}>
+                    {STAR_LABELS[initialRating]}
+                  </ThemedText>
+                </View>
+                {/* Feedback preview */}
+                {initialFeedback.trim().length > 0 && (
+                  <ThemedText style={[styles.feedbackPreview, { color: muted }]} numberOfLines={2}>
+                    {initialFeedback.trim()}
+                  </ThemedText>
+                )}
+              </>
+            ) : (
+              <ThemedText style={[styles.emptyText, { color: muted }]}>
+                Δεν έχεις αξιολογήσει ακόμα.
+              </ThemedText>
+            )}
+          </View>
+
+          {/* Edit button */}
+          <Pressable
+            onPress={openModal}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.editBtn,
+              { borderColor: border, backgroundColor: surface, opacity: pressed ? 0.65 : 1 },
+            ]}
+          >
+            <Pencil size={13} color={tint} strokeWidth={2} />
+          </Pressable>
         </View>
-        {rating > 0 && (
-          <ThemedText style={[styles.starLabel, { color: starFilled }]}>
-            {STAR_LABELS[rating]}
-          </ThemedText>
-        )}
-      </View>
+      </Card>
 
-      {/* Text input */}
-      <View style={[styles.inputWrap, { borderColor: border, backgroundColor: bg }]}>
-        <TextInput
-          value={feedback}
-          onChangeText={(t) => setFeedback(t.slice(0, maxChars))}
-          placeholder="Γράψε εδώ το feedback σου…"
-          placeholderTextColor={muted}
-          multiline
-          textAlignVertical="top"
-          style={[styles.input, { color: text }]}
-        />
-        <ThemedText style={[styles.counter, { color: muted }]}>{remaining}</ThemedText>
-      </View>
-
-      {/* Submit */}
-      <Pressable
-        onPress={handleSubmit}
-        disabled={!canSubmit}
-        style={({ pressed }) => [
-          styles.submitBtn,
-          {
-            backgroundColor: canSubmit ? tint : 'transparent',
-            borderColor:     tint,
-            opacity:         canSubmit ? (pressed ? 0.82 : 1) : 0.45,
-          },
-        ]}
+      {/* ── Submission modal ── */}
+      <Modal
+        transparent
+        visible={modalOpen}
+        animationType="fade"
+        onRequestClose={() => { if (!submitting) setModalOpen(false); }}
       >
-        <ThemedText style={[styles.submitText, { color: canSubmit ? '#fff' : tint }]}>
-          {submitting ? 'Αποστολή…' : 'Υποβολή'}
-        </ThemedText>
-      </Pressable>
-    </Card>
+        <View style={styles.backdrop}>
+          <View style={[styles.modalCard, { backgroundColor: surface, borderColor: border }]}>
+            <ThemedText style={[styles.modalTitle, { color: text }]}>
+              Αξιολόγησε το φροντιστήριό σου
+            </ThemedText>
+
+            {/* Stars */}
+            <View style={styles.modalStarsBlock}>
+              <View style={styles.modalStarsRow}>
+                {[1, 2, 3, 4, 5].map((v) => {
+                  const filled = v <= rating;
+                  return (
+                    <Pressable
+                      key={v}
+                      onPress={() => setRating(v)}
+                      hitSlop={8}
+                      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                    >
+                      <Star
+                        size={28}
+                        color={filled ? STAR_FILLED : muted}
+                        fill={filled ? STAR_FILLED : 'transparent'}
+                        strokeWidth={1.8}
+                      />
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {rating > 0 && (
+                <ThemedText style={[styles.modalStarLabel, { color: STAR_FILLED }]}>
+                  {STAR_LABELS[rating]}
+                </ThemedText>
+              )}
+            </View>
+
+            {/* Text input */}
+            <View style={[styles.inputWrap, { borderColor: border, backgroundColor: bg }]}>
+              <TextInput
+                value={feedback}
+                onChangeText={(t) => setFeedback(t.slice(0, maxChars))}
+                placeholder="Γράψε εδώ το feedback σου…"
+                placeholderTextColor={muted}
+                multiline
+                textAlignVertical="top"
+                style={[styles.input, { color: text }]}
+              />
+              <ThemedText style={[styles.counter, { color: muted }]}>{remaining}</ThemedText>
+            </View>
+
+            {/* Actions */}
+            <View style={styles.modalActions}>
+              <Pressable
+                disabled={submitting}
+                onPress={() => setModalOpen(false)}
+                style={({ pressed }) => [
+                  styles.modalBtn,
+                  { borderColor: border, backgroundColor: pressed ? 'rgba(148,163,184,0.14)' : 'transparent', opacity: submitting ? 0.5 : 1 },
+                ]}
+              >
+                <ThemedText style={[styles.modalBtnText, { color: muted }]}>Ακύρωση</ThemedText>
+              </Pressable>
+
+              <Pressable
+                onPress={handleSubmit}
+                disabled={!canSubmit}
+                style={({ pressed }) => [
+                  styles.modalBtn,
+                  {
+                    backgroundColor: canSubmit ? tint : 'transparent',
+                    borderColor:     tint,
+                    opacity:         canSubmit ? (pressed ? 0.82 : 1) : 0.4,
+                  },
+                ]}
+              >
+                <ThemedText style={[styles.modalBtnText, { color: canSubmit ? '#fff' : tint }]}>
+                  {submitting ? 'Αποστολή…' : 'Υποβολή'}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize:      15,
-    fontWeight:    '700',
-    letterSpacing: -0.1,
-    marginBottom:  Spacing.md,
+  // ── Card ─────────────────────────────────────────────────────────────────
+  cardRow: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           Spacing.md,
   },
-
-  starsBlock: {
-    marginBottom: Spacing.md,
-    gap:          6,
+  cardLeft: {
+    flex: 1,
+    gap:  4,
+  },
+  cardTitle: {
+    fontSize:   13,
+    fontWeight: '700',
   },
   starsRow: {
     flexDirection: 'row',
     alignItems:    'center',
-    gap:           4,
-  },
-  starBtn: {
-    padding:      3,
-    borderRadius: Radius.sm,
+    gap:           3,
   },
   starLabel: {
+    fontSize:   11,
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  feedbackPreview: {
+    fontSize:   12,
+    fontWeight: '400',
+    lineHeight: 17,
+  },
+  emptyText: {
+    fontSize:   12,
+    fontWeight: '400',
+  },
+  editBtn: {
+    width:          30,
+    height:         30,
+    borderRadius:   15,
+    borderWidth:    StyleSheet.hairlineWidth,
+    alignItems:     'center',
+    justifyContent: 'center',
+    flexShrink:     0,
+  },
+
+  // ── Modal ─────────────────────────────────────────────────────────────────
+  backdrop: {
+    flex:            1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems:      'center',
+    justifyContent:  'center',
+    padding:         Spacing.lg,
+  },
+  modalCard: {
+    width:        '100%',
+    maxWidth:     380,
+    borderRadius: Radius.xl,
+    borderWidth:  Platform.select({ ios: StyleSheet.hairlineWidth, default: 1 }),
+    padding:      Spacing.lg,
+    gap:          Spacing.md,
+    shadowColor:   '#000',
+    shadowOpacity: 0.18,
+    shadowRadius:  24,
+    shadowOffset:  { width: 0, height: 10 },
+    elevation:     14,
+  },
+  modalTitle: {
+    fontSize:      15,
+    fontWeight:    '700',
+    letterSpacing: -0.1,
+  },
+
+  modalStarsBlock: { gap: 6 },
+  modalStarsRow: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           4,
+  },
+  modalStarLabel: {
     fontSize:   12,
     fontWeight: '600',
     marginLeft: 2,
   },
 
   inputWrap: {
-    borderWidth:   1,
-    borderRadius:  Radius.lg,
-    padding:       Spacing.md,
-    marginBottom:  Spacing.md,
+    borderWidth:  1,
+    borderRadius: Radius.lg,
+    padding:      Spacing.md,
   },
   input: {
     minHeight:  80,
@@ -167,21 +313,24 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   counter: {
-    fontSize:   11,
+    fontSize:  11,
     fontWeight: '500',
     textAlign:  'right',
     marginTop:  6,
   },
 
-  submitBtn: {
-    borderWidth:     1,
-    borderRadius:    Radius.lg,
-    paddingVertical: 12,
-    alignItems:      'center',
-    justifyContent:  'center',
+  modalActions: {
+    flexDirection: 'row',
+    gap:           Spacing.sm,
   },
-  submitText: {
-    fontSize:   13,
-    fontWeight: '700',
+  modalBtn: {
+    flex:              1,
+    borderRadius:      999,
+    paddingVertical:   10,
+    paddingHorizontal: 16,
+    borderWidth:       1,
+    alignItems:        'center',
+    justifyContent:    'center',
   },
+  modalBtnText: { fontSize: 13, fontWeight: '700' },
 });

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"/c/Users/KOSTAS/Desktop/Projects/ProfessorTec/professortec-mobile/app/\\(tabs\\)/\")",
+      "Bash(find /c/Users/KOSTAS/Desktop/Projects/ProfessorTec/professortec-mobile -name *.sql -o -name migrations -o -name schema*)",
+      "Bash(cat \"/c/Users/KOSTAS/Desktop/Projects/ProfessorTec/professortec-mobile/app/\\(tabs\\)/progress.tsx\")"
+    ]
+  }
+}

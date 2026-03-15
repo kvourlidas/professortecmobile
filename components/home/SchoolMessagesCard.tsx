@@ -69,13 +69,6 @@ export default function SchoolMessagesCard() {
             {/* Icon */}
             <View style={[styles.iconWrap, { backgroundColor: tint + '15', borderColor: tint + '30' }]}>
               <MessageCircle size={18} color={tint} strokeWidth={2} />
-              {!loading && unreadCount > 0 && (
-                <View style={[styles.badge, { backgroundColor: tint }]}>
-                  <ThemedText style={styles.badgeText}>
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </ThemedText>
-                </View>
-              )}
             </View>
 
             {/* Text */}
@@ -124,24 +117,6 @@ const styles = StyleSheet.create({
     flexShrink:     0,
     position:       'relative',
   },
-  badge: {
-    position:      'absolute',
-    top:           -6,
-    right:         -6,
-    minWidth:      16,
-    height:        16,
-    borderRadius:  8,
-    alignItems:    'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  badgeText: {
-    fontSize:   9,
-    fontWeight: '800',
-    color:      '#fff',
-    includeFontPadding: false,
-  },
-
   textBlock: { flex: 1, gap: 3 },
 
   titleRow: {

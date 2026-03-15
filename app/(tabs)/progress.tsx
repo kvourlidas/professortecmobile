@@ -1,6 +1,6 @@
 // app/(tabs)/progress.tsx
 import { useFocusEffect } from '@react-navigation/native';
-import { BarChart3, RefreshCw } from 'lucide-react-native';
+import { BarChart3 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -147,15 +147,6 @@ export default function ProgressScreen() {
           <BarChart3 size={20} color={tint} strokeWidth={2} />
           <ThemedText style={styles.headerTitle}>Πρόοδος</ThemedText>
         </View>
-        <Pressable
-          onPress={loadGrades} hitSlop={8}
-          style={({ pressed }) => [
-            styles.refreshBtn,
-            { borderColor: border, backgroundColor: surface, opacity: pressed ? 0.65 : 1 },
-          ]}
-        >
-          <RefreshCw size={15} color={tint} strokeWidth={2.2} />
-        </Pressable>
       </View>
 
       {/* ── Error ── */}
@@ -229,11 +220,9 @@ export default function ProgressScreen() {
             {gradedCount} {gradedCount === 1 ? 'διαγώνισμα' : 'διαγωνίσματα'}
           </ThemedText>
         </View>
-        <View style={[styles.summaryBadge, { backgroundColor: avgColor + '18', borderColor: avgColor + '40' }]}>
-          <ThemedText style={[styles.summaryValue, { color: avgColor }]}>
-            {avgGrade !== null ? avgGrade.toFixed(1) : '—'}
-          </ThemedText>
-        </View>
+        <ThemedText style={[styles.summaryValue, { color: avgColor }]}>
+          {avgGrade !== null ? avgGrade.toFixed(1) : '—'}
+        </ThemedText>
       </View>
 
       {/* ── Chart ── */}
@@ -278,11 +267,9 @@ export default function ProgressScreen() {
                       {item.end_time   ? `–${formatTime(item.end_time)}`    : ''}
                     </ThemedText>
                   </View>
-                  <View style={[styles.gradePill, { backgroundColor: gc + '15', borderColor: gc + '40' }]}>
-                    <ThemedText style={[styles.gradePillText, { color: gc }]}>
-                      {typeof item.grade === 'number' ? item.grade.toFixed(1) : '—'}
-                    </ThemedText>
-                  </View>
+                  <ThemedText style={[styles.gradePillText, { color: gc }]}>
+                    {typeof item.grade === 'number' ? item.grade.toFixed(1) : '—'}
+                  </ThemedText>
                 </View>
               );
             }}
@@ -302,12 +289,6 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
-  refreshBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center', justifyContent: 'center',
-  },
-
   errorBox: {
     padding: Spacing.md, borderRadius: Radius.lg, marginBottom: Spacing.md,
     backgroundColor: 'rgba(248,113,113,0.10)',
@@ -361,11 +342,7 @@ const styles = StyleSheet.create({
   summaryLeft:  { gap: 3 },
   summaryLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 0.2 },
   summaryCount: { fontSize: 11, fontWeight: '500' },
-  summaryBadge: {
-    minWidth: 64, height: 48, borderRadius: Radius.lg, borderWidth: 1,
-    alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.md,
-  },
-  summaryValue: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+  summaryValue: { fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
 
   chartWrap: { marginBottom: Spacing.md },
 
@@ -385,9 +362,5 @@ const styles = StyleSheet.create({
   gradeRowTitle: { fontSize: 14, fontWeight: '700', letterSpacing: -0.1 },
   gradeRowSub:   { fontSize: 12, fontWeight: '500' },
   gradeRowMeta:  { fontSize: 11, fontWeight: '400', marginTop: 1 },
-  gradePill: {
-    minWidth: 52, height: 38, borderRadius: Radius.md, borderWidth: 1,
-    alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.sm,
-  },
-  gradePillText: { fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
+  gradePillText: { fontSize: 12, fontWeight: '700', letterSpacing: -0.1 },
 });
