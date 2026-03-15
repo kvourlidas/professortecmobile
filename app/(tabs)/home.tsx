@@ -196,45 +196,46 @@ export default function HomeScreen() {
   return (
     <ThemedView style={[styles.screen, { backgroundColor: bg }]}>
 
-      {/* ── Top bar ── */}
-      <View style={styles.topBar}>
-
-        {/* Left spacer — same width as bell so logo stays truly centered */}
-        <View style={styles.bellPlaceholder} />
-
-        {/* Center — logo overflows the 52px header above and below */}
-        <View style={styles.logoWrap}>
-          <Image
-            source={isDark ? LOGO_DARK : LOGO_LIGHT}
-            style={styles.logo}
-            resizeMode="cover"
-          />
-        </View>
-
-        {/* Right — notification bell */}
-        <Pressable
-          onPress={() => router.push('/notifications')}
-          style={({ pressed }) => [
-            styles.bellBtn,
-            {
-              backgroundColor: pressed ? tint + '18' : surface,
-              borderColor:     border,
-            },
-          ]}
-        >
-          <Bell size={18} color={tint} strokeWidth={2} />
-          {unreadCount > 0 && (
-            <View style={[styles.badge, { backgroundColor: tint }]}>
-              <ThemedText style={styles.badgeText}>
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </ThemedText>
-            </View>
-          )}
-        </Pressable>
-      </View>
-
       {/* ── Content ── */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+
+        {/* ── Top bar ── */}
+        <View style={styles.topBar}>
+
+          {/* Left spacer — same width as bell so logo stays truly centered */}
+          <View style={styles.bellPlaceholder} />
+
+          {/* Center — logo overflows the 52px header above and below */}
+          <View style={styles.logoWrap}>
+            <Image
+              source={isDark ? LOGO_DARK : LOGO_LIGHT}
+              style={styles.logo}
+              resizeMode="cover"
+            />
+          </View>
+
+          {/* Right — notification bell */}
+          <Pressable
+            onPress={() => router.push('/notifications')}
+            style={({ pressed }) => [
+              styles.bellBtn,
+              {
+                backgroundColor: pressed ? tint + '18' : surface,
+                borderColor:     border,
+              },
+            ]}
+          >
+            <Bell size={18} color={tint} strokeWidth={2} />
+            {unreadCount > 0 && (
+              <View style={[styles.badge, { backgroundColor: tint }]}>
+                <ThemedText style={styles.badgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </ThemedText>
+              </View>
+            )}
+          </Pressable>
+        </View>
+
         <NextSessionCard />
 
         <View style={{ marginTop: Spacing.md }}>
@@ -311,6 +312,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: Spacing.xl,
+    paddingTop: 0,
   },
 
   // ── Top bar ───────────────────────────────────────────────────────────────

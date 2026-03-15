@@ -4,7 +4,6 @@ import { BarChart3 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
   Platform,
   Pressable,
   ScrollView,
@@ -138,152 +137,159 @@ export default function ProgressScreen() {
 
   const avgColor = gradeColor(avgGrade, tint);
 
+  const reversedGrades = useMemo(() => [...visibleGrades].reverse(), [visibleGrades]);
+
   return (
     <ThemedView style={[styles.screen, { backgroundColor: bg }]}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-      {/* ── Header ── */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <BarChart3 size={20} color={tint} strokeWidth={2} />
-          <ThemedText style={styles.headerTitle}>Πρόοδος</ThemedText>
-        </View>
-      </View>
-
-      {/* ── Error ── */}
-      {!!error && (
-        <View style={styles.errorBox}>
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
-        </View>
-      )}
-
-      {/* ── Main tabs ── */}
-      <View style={[styles.tabsRow, { backgroundColor: surface, borderColor: border }]}>
-        {(['overall', 'by-subject'] as TabKey[]).map((tab) => {
-          const active = activeTab === tab;
-          return (
-            <Pressable
-              key={tab}
-              onPress={() => { setActiveTab(tab); if (tab === 'overall') setSelectedSubjectId(null); }}
-              style={({ pressed }) => [
-                styles.tabBtn,
-                active && { backgroundColor: tint },
-                pressed && { opacity: 0.82 },
-              ]}
-            >
-              <ThemedText style={[styles.tabText, { color: active ? '#fff' : muted }]}>
-                {tab === 'overall' ? 'Γενικά' : 'Ανά μάθημα'}
-              </ThemedText>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* ── Subject selector: plain underline tabs, no bubbles ── */}
-      {activeTab === 'by-subject' && (
-        <View style={[styles.subjectBar, { borderBottomColor: border }]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.subjectBarInner}
-          >
-            {subjectOptions.length === 0 ? (
-              <ThemedText style={[styles.emptyText, { color: muted }]}>
-                Δεν υπάρχουν μαθήματα με βαθμούς.
-              </ThemedText>
-            ) : subjectOptions.map((s) => {
-              const active = s.id === selectedSubjectId;
-              return (
-                <Pressable
-                  key={s.id}
-                  onPress={() => setSelectedSubjectId(s.id)}
-                  style={({ pressed }) => [styles.subjectTab, { opacity: pressed ? 0.65 : 1 }]}
-                >
-                  <ThemedText style={[styles.subjectTabText, { color: active ? tint : muted }]}>
-                    {s.name}
-                  </ThemedText>
-                  <View style={[
-                    styles.subjectUnderline,
-                    { backgroundColor: active ? tint : 'transparent' },
-                  ]} />
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* ── Summary card ── */}
-      <View style={[styles.summaryCard, { backgroundColor: surface, borderColor: border }]}>
-        <View style={styles.summaryLeft}>
-          <ThemedText style={[styles.summaryLabel, { color: muted }]}>Μέσος όρος</ThemedText>
-          <ThemedText style={[styles.summaryCount, { color: muted }]}>
-            {gradedCount} {gradedCount === 1 ? 'διαγώνισμα' : 'διαγωνίσματα'}
-          </ThemedText>
-        </View>
-        <ThemedText style={[styles.summaryValue, { color: avgColor }]}>
-          {avgGrade !== null ? avgGrade.toFixed(1) : '—'}
-        </ThemedText>
-      </View>
-
-      {/* ── Chart ── */}
-      <View style={styles.chartWrap}>
-        <ProgressChart points={chartPoints} />
-      </View>
-
-      {/* ── Grades list ── */}
-      <View style={[styles.listCard, { backgroundColor: surface, borderColor: border }]}>
-        {loading ? (
-          <View style={styles.centeredBox}>
-            <ActivityIndicator color={tint} size="small" />
-            <ThemedText style={[styles.centeredText, { color: muted }]}>Φόρτωση βαθμών…</ThemedText>
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <BarChart3 size={20} color={tint} strokeWidth={2} />
+            <ThemedText style={styles.headerTitle}>Πρόοδος</ThemedText>
           </View>
-        ) : visibleGrades.length === 0 ? (
-          <View style={styles.centeredBox}>
-            <ThemedText style={[styles.centeredText, { color: muted }]}>
-              Δεν υπάρχουν βαθμοί για τα επιλεγμένα κριτήρια.
+        </View>
+
+        {/* ── Error ── */}
+        {!!error && (
+          <View style={styles.errorBox}>
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+          </View>
+        )}
+
+        {/* ── Main tabs ── */}
+        <View style={[styles.tabsRow, { backgroundColor: surface, borderColor: border }]}>
+          {(['overall', 'by-subject'] as TabKey[]).map((tab) => {
+            const active = activeTab === tab;
+            return (
+              <Pressable
+                key={tab}
+                onPress={() => { setActiveTab(tab); if (tab === 'overall') setSelectedSubjectId(null); }}
+                style={({ pressed }) => [
+                  styles.tabBtn,
+                  active && { backgroundColor: tint },
+                  pressed && { opacity: 0.82 },
+                ]}
+              >
+                <ThemedText style={[styles.tabText, { color: active ? '#fff' : muted }]}>
+                  {tab === 'overall' ? 'Γενικά' : 'Ανά μάθημα'}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* ── Subject selector: plain underline tabs, no bubbles ── */}
+        {activeTab === 'by-subject' && (
+          <View style={[styles.subjectBar, { borderBottomColor: border }]}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.subjectBarInner}
+            >
+              {subjectOptions.length === 0 ? (
+                <ThemedText style={[styles.emptyText, { color: muted }]}>
+                  Δεν υπάρχουν μαθήματα με βαθμούς.
+                </ThemedText>
+              ) : subjectOptions.map((s) => {
+                const active = s.id === selectedSubjectId;
+                return (
+                  <Pressable
+                    key={s.id}
+                    onPress={() => setSelectedSubjectId(s.id)}
+                    style={({ pressed }) => [styles.subjectTab, { opacity: pressed ? 0.65 : 1 }]}
+                  >
+                    <ThemedText style={[styles.subjectTabText, { color: active ? tint : muted }]}>
+                      {s.name}
+                    </ThemedText>
+                    <View style={[
+                      styles.subjectUnderline,
+                      { backgroundColor: active ? tint : 'transparent' },
+                    ]} />
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* ── Summary card ── */}
+        <View style={[styles.summaryCard, { backgroundColor: surface, borderColor: border }]}>
+          <View style={styles.summaryLeft}>
+            <ThemedText style={[styles.summaryLabel, { color: muted }]}>Μέσος όρος</ThemedText>
+            <ThemedText style={[styles.summaryCount, { color: muted }]}>
+              {gradedCount} {gradedCount === 1 ? 'διαγώνισμα' : 'διαγωνίσματα'}
             </ThemedText>
           </View>
-        ) : (
-          <FlatList
-            data={[...visibleGrades].reverse()}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: Spacing.xs }}
-            ItemSeparatorComponent={() => <View style={[styles.sep, { backgroundColor: border }]} />}
-            renderItem={({ item }) => {
-              const gc = gradeColor(item.grade, tint);
-              return (
-                <View style={styles.gradeRow}>
-                  <View style={styles.gradeRowLeft}>
-                    <ThemedText style={[styles.gradeRowTitle, { color: text }]} numberOfLines={1}>
-                      {item.test_name ?? 'Διαγώνισμα'}
-                    </ThemedText>
-                    <ThemedText style={[styles.gradeRowSub, { color: muted }]} numberOfLines={1}>
-                      {item.subject_name ?? '—'}{item.class_title ? ` · ${item.class_title}` : ''}
-                    </ThemedText>
-                    <ThemedText style={[styles.gradeRowMeta, { color: muted }]}>
-                      {formatDate(item.test_date)}
-                      {item.start_time ? ` · ${formatTime(item.start_time)}` : ''}
-                      {item.end_time   ? `–${formatTime(item.end_time)}`    : ''}
-                    </ThemedText>
-                  </View>
-                  <ThemedText style={[styles.gradePillText, { color: gc }]}>
-                    {typeof item.grade === 'number' ? item.grade.toFixed(1) : '—'}
-                  </ThemedText>
-                </View>
-              );
-            }}
-          />
-        )}
-      </View>
+          <ThemedText style={[styles.summaryValue, { color: avgColor }]}>
+            {avgGrade !== null ? avgGrade.toFixed(1) : '—'}
+          </ThemedText>
+        </View>
+
+        {/* ── Chart ── */}
+        <View style={styles.chartWrap}>
+          <ProgressChart points={chartPoints} />
+        </View>
+
+        {/* ── Grades list ── */}
+        <View style={[styles.listCard, { backgroundColor: surface, borderColor: border }]}>
+          {loading ? (
+            <View style={styles.centeredBox}>
+              <ActivityIndicator color={tint} size="small" />
+              <ThemedText style={[styles.centeredText, { color: muted }]}>Φόρτωση βαθμών…</ThemedText>
+            </View>
+          ) : reversedGrades.length === 0 ? (
+            <View style={styles.centeredBox}>
+              <ThemedText style={[styles.centeredText, { color: muted }]}>
+                Δεν υπάρχουν βαθμοί για τα επιλεγμένα κριτήρια.
+              </ThemedText>
+            </View>
+          ) : (
+            <View style={{ paddingVertical: Spacing.xs }}>
+              {reversedGrades.map((item, index) => {
+                const gc = gradeColor(item.grade, tint);
+                return (
+                  <React.Fragment key={item.id}>
+                    {index > 0 && <View style={[styles.sep, { backgroundColor: border }]} />}
+                    <View style={styles.gradeRow}>
+                      <View style={styles.gradeRowLeft}>
+                        <ThemedText style={[styles.gradeRowTitle, { color: text }]} numberOfLines={1}>
+                          {item.test_name ?? 'Διαγώνισμα'}
+                        </ThemedText>
+                        <ThemedText style={[styles.gradeRowSub, { color: muted }]} numberOfLines={1}>
+                          {item.subject_name ?? '—'}{item.class_title ? ` · ${item.class_title}` : ''}
+                        </ThemedText>
+                        <ThemedText style={[styles.gradeRowMeta, { color: muted }]}>
+                          {formatDate(item.test_date)}
+                          {item.start_time ? ` · ${formatTime(item.start_time)}` : ''}
+                          {item.end_time   ? `–${formatTime(item.end_time)}`    : ''}
+                        </ThemedText>
+                      </View>
+                      <ThemedText style={[styles.gradePillText, { color: gc }]}>
+                        {typeof item.grade === 'number' ? item.grade.toFixed(1) : '—'}
+                      </ThemedText>
+                    </View>
+                  </React.Fragment>
+                );
+              })}
+            </View>
+          )}
+        </View>
+
+      </ScrollView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1, padding: Spacing.lg,
+    flex: 1,
+  },
+  scrollContent: {
+    padding: Spacing.lg,
     paddingTop: Platform.select({ ios: 56, default: Spacing.xl }),
+    paddingBottom: Spacing.xl,
   },
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg },
@@ -347,7 +353,7 @@ const styles = StyleSheet.create({
   chartWrap: { marginBottom: Spacing.md },
 
   listCard: {
-    flex: 1, borderRadius: Radius.xl, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden',
+    borderRadius: Radius.xl, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden',
     shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   centeredBox:  { paddingVertical: Spacing.xl, alignItems: 'center', gap: Spacing.sm },

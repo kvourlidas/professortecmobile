@@ -371,131 +371,131 @@ export default function ScheduleScreen() {
         style={[styles.sideLineRight, { top: insets.top + Spacing.sm, bottom: insets.bottom + Spacing.sm }]}
       />
 
-      {/* ── Header ── */}
-      <View style={styles.headerRow}>
-        <CalendarDays size={20} color={tint} strokeWidth={2} />
-        <ThemedText style={styles.headerTitle}>Πρόγραμμα</ThemedText>
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-      {/* ── Calendar ── */}
-      <View style={styles.calendarWrap}>
-
-        {/* Month nav */}
-        <View style={styles.monthHeaderRow}>
-          <Pressable
-            onPress={() => setMonthAnchor((d) => startOfMonth(new Date(d.getFullYear(), d.getMonth() - 1, 1)))}
-            style={[styles.monthArrowBtn, { borderColor: border, backgroundColor: surface }]}
-            hitSlop={10}
-          >
-            <ChevronLeft size={16} color={icon} strokeWidth={2.2} />
-          </Pressable>
-
-          <ThemedText style={styles.monthTitle}>{headerMonthLabel}</ThemedText>
-
-          <Pressable
-            onPress={() => setMonthAnchor((d) => startOfMonth(new Date(d.getFullYear(), d.getMonth() + 1, 1)))}
-            style={[styles.monthArrowBtn, { borderColor: border, backgroundColor: surface }]}
-            hitSlop={10}
-          >
-            <ChevronRight size={16} color={icon} strokeWidth={2.2} />
-          </Pressable>
+        {/* ── Header ── */}
+        <View style={styles.headerRow}>
+          <CalendarDays size={20} color={tint} strokeWidth={2} />
+          <ThemedText style={styles.headerTitle}>Πρόγραμμα</ThemedText>
         </View>
 
-        {/* Weekday labels */}
-        <View style={styles.weekdayRow}>
-          {WEEKDAY_GR.map((w) => (
-            <View key={w} style={styles.weekdayCell}>
-              <ThemedText style={[styles.weekdayText, { color: muted }]}>{w}</ThemedText>
-            </View>
-          ))}
-        </View>
+        {/* ── Calendar ── */}
+        <View style={styles.calendarWrap}>
 
-        {/* Day grid */}
-        <View style={styles.grid}>
-          {calendarGridDays.map((d) => {
-            const inMonth = d.getMonth() === monthStart.getMonth();
-            const selected = isSameYMD(d, selectedDay);
-            const today    = isToday(d);
-            const iso      = toYMD(d);
-            const count    = eventsCountByDay.get(iso) ?? 0;
+          {/* Month nav */}
+          <View style={styles.monthHeaderRow}>
+            <Pressable
+              onPress={() => setMonthAnchor((d) => startOfMonth(new Date(d.getFullYear(), d.getMonth() - 1, 1)))}
+              style={[styles.monthArrowBtn, { borderColor: border, backgroundColor: surface }]}
+              hitSlop={10}
+            >
+              <ChevronLeft size={16} color={icon} strokeWidth={2.2} />
+            </Pressable>
 
-            return (
-              <Pressable key={iso} onPress={() => setSelectedDay(d)} style={styles.dayOuter} hitSlop={4}>
-                <View
-                  style={[
-                    styles.dayCell,
-                    { borderColor: border },
-                    today    && { borderColor: tint + '60' },
-                    selected && { borderColor: tint, backgroundColor: surface,
-                      shadowColor: tint, shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 4,
-                    },
-                  ]}
-                >
-                  <ThemedText
+            <ThemedText style={styles.monthTitle}>{headerMonthLabel}</ThemedText>
+
+            <Pressable
+              onPress={() => setMonthAnchor((d) => startOfMonth(new Date(d.getFullYear(), d.getMonth() + 1, 1)))}
+              style={[styles.monthArrowBtn, { borderColor: border, backgroundColor: surface }]}
+              hitSlop={10}
+            >
+              <ChevronRight size={16} color={icon} strokeWidth={2.2} />
+            </Pressable>
+          </View>
+
+          {/* Weekday labels */}
+          <View style={styles.weekdayRow}>
+            {WEEKDAY_GR.map((w) => (
+              <View key={w} style={styles.weekdayCell}>
+                <ThemedText style={[styles.weekdayText, { color: muted }]}>{w}</ThemedText>
+              </View>
+            ))}
+          </View>
+
+          {/* Day grid */}
+          <View style={styles.grid}>
+            {calendarGridDays.map((d) => {
+              const inMonth = d.getMonth() === monthStart.getMonth();
+              const selected = isSameYMD(d, selectedDay);
+              const today    = isToday(d);
+              const iso      = toYMD(d);
+              const count    = eventsCountByDay.get(iso) ?? 0;
+
+              return (
+                <Pressable key={iso} onPress={() => setSelectedDay(d)} style={styles.dayOuter} hitSlop={4}>
+                  <View
                     style={[
-                      styles.dayNum,
-                      { color: inMonth ? text : muted, opacity: inMonth ? 1 : 0.35 },
-                      today    && { color: tint, opacity: 1, fontWeight: '800' },
-                      selected && { fontWeight: '800' },
+                      styles.dayCell,
+                      { borderColor: border },
+                      today    && { borderColor: tint + '60' },
+                      selected && { borderColor: tint, backgroundColor: surface,
+                        shadowColor: tint, shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 4,
+                      },
                     ]}
                   >
-                    {d.getDate()}
-                  </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.dayNum,
+                        { color: inMonth ? text : muted, opacity: inMonth ? 1 : 0.35 },
+                        today    && { color: tint, opacity: 1, fontWeight: '800' },
+                        selected && { fontWeight: '800' },
+                      ]}
+                    >
+                      {d.getDate()}
+                    </ThemedText>
 
-                  {!!count && (
-                    <View style={styles.dotsRow}>
-                      {Array.from({ length: Math.min(3, count) }).map((_, i) => (
-                        <View
-                          key={i}
-                          style={[styles.dot, { backgroundColor: selected ? tint : muted, opacity: selected ? 1 : 0.7 }]}
-                        />
-                      ))}
-                      {count > 3 && (
-                        <ThemedText style={[styles.moreText, { color: muted }]}>+</ThemedText>
-                      )}
-                    </View>
-                  )}
-                </View>
-              </Pressable>
-            );
-          })}
+                    {!!count && (
+                      <View style={styles.dotsRow}>
+                        {Array.from({ length: Math.min(3, count) }).map((_, i) => (
+                          <View
+                            key={i}
+                            style={[styles.dot, { backgroundColor: selected ? tint : muted, opacity: selected ? 1 : 0.7 }]}
+                          />
+                        ))}
+                        {count > 3 && (
+                          <ThemedText style={[styles.moreText, { color: muted }]}>+</ThemedText>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
 
-      <View style={{ height: Spacing.md }} />
+        <View style={{ height: Spacing.md }} />
 
-      {/* ── Selected day label ── */}
-      <View style={styles.dayLabelRow}>
-        <ThemedText style={styles.dayLabel}>{selectedLabel}</ThemedText>
-        {loading && <ActivityIndicator size="small" color={tint} style={{ marginLeft: Spacing.sm }} />}
-      </View>
-
-      {/* ── Events list ── */}
-      {!loading && dayEvents.length === 0 ? (
-        <View style={[styles.emptyBox, { borderColor: border, backgroundColor: surface }]}>
-          <ThemedText style={[styles.emptyTitle, { color: text }]}>
-            Δεν έχεις event αυτή την ημέρα.
-          </ThemedText>
-          {!!inactiveMsg && (
-            <ThemedText style={[styles.emptySub, { color: muted }]}>{inactiveMsg}</ThemedText>
-          )}
+        {/* ── Selected day label ── */}
+        <View style={styles.dayLabelRow}>
+          <ThemedText style={styles.dayLabel}>{selectedLabel}</ThemedText>
+          {loading && <ActivityIndicator size="small" color={tint} style={{ marginLeft: Spacing.sm }} />}
         </View>
-      ) : (
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={[styles.evList, { borderColor: border, backgroundColor: surface }]}
-          showsVerticalScrollIndicator={false}
-        >
-          {dayEvents.map((ev, idx) => (
-            <EventRow
-              key={`${ev.kind}-${ev.start.getTime()}-${idx}`}
-              ev={ev}
-              isLast={idx === dayEvents.length - 1}
-              isDark={isDark}
-            />
-          ))}
-        </ScrollView>
-      )}
+
+        {/* ── Events list ── */}
+        {!loading && dayEvents.length === 0 ? (
+          <View style={[styles.emptyBox, { borderColor: border, backgroundColor: surface }]}>
+            <ThemedText style={[styles.emptyTitle, { color: text }]}>
+              Δεν έχεις event αυτή την ημέρα.
+            </ThemedText>
+            {!!inactiveMsg && (
+              <ThemedText style={[styles.emptySub, { color: muted }]}>{inactiveMsg}</ThemedText>
+            )}
+          </View>
+        ) : (
+          <View style={[styles.evList, { borderColor: border, backgroundColor: surface }]}>
+            {dayEvents.map((ev, idx) => (
+              <EventRow
+                key={`${ev.kind}-${ev.start.getTime()}-${idx}`}
+                ev={ev}
+                isLast={idx === dayEvents.length - 1}
+                isDark={isDark}
+              />
+            ))}
+          </View>
+        )}
+
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -504,9 +504,12 @@ export default function ScheduleScreen() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex:       1,
-    padding:    Spacing.lg,
-    paddingTop: Platform.select({ ios: 56, default: Spacing.xl }),
+    flex: 1,
+  },
+  scrollContent: {
+    padding:       Spacing.lg,
+    paddingTop:    Platform.select({ ios: 56, default: Spacing.xl }),
+    paddingBottom: Spacing.xl,
   },
 
   sideLineLeft: {
