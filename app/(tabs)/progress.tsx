@@ -1,6 +1,4 @@
-// app/(tabs)/progress.tsx
 import { useFocusEffect } from '@react-navigation/native';
-import { BarChart3 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -41,11 +39,6 @@ function formatDateShort(value: string | null) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' });
-}
-
-function formatTime(value: string | null) {
-  if (!value) return '';
-  return value.slice(0, 5);
 }
 
 function gradeColor(grade: number | null, tint: string): string {
@@ -119,10 +112,12 @@ export default function ProgressScreen() {
     return grades.filter((g) => g.subject_id === selectedSubjectId);
   }, [grades, activeTab, selectedSubjectId]);
 
-  const { avgGrade, gradedCount } = useMemo(() => {
+  const { avgGrade, gradedCount, bestGrade } = useMemo(() => {
     const valid = visibleGrades.filter((g) => typeof g.grade === 'number') as Array<StudentTestGradeRow & { grade: number }>;
-    if (!valid.length) return { avgGrade: null as number | null, gradedCount: 0 };
-    return { avgGrade: valid.reduce((a, g) => a + g.grade, 0) / valid.length, gradedCount: valid.length };
+    if (!valid.length) return { avgGrade: null as number | null, gradedCount: 0, bestGrade: null as number | null };
+    const avg  = valid.reduce((a, g) => a + g.grade, 0) / valid.length;
+    const best = Math.max(...valid.map((g) => g.grade));
+    return { avgGrade: avg, gradedCount: valid.length, bestGrade: best };
   }, [visibleGrades]);
 
   const chartPoints = useMemo(() =>
@@ -135,7 +130,8 @@ export default function ProgressScreen() {
       })),
   [visibleGrades]);
 
-  const avgColor = gradeColor(avgGrade, tint);
+  const avgColor  = gradeColor(avgGrade, tint);
+  const bestColor = gradeColor(bestGrade, tint);
 
   const reversedGrades = useMemo(() => [...visibleGrades].reverse(), [visibleGrades]);
 
@@ -145,20 +141,17 @@ export default function ProgressScreen() {
 
         {/* ── Header ── */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <BarChart3 size={20} color={tint} strokeWidth={2} />
-            <ThemedText style={styles.headerTitle}>Πρόοδος</ThemedText>
-          </View>
+          <ThemedText style={[styles.headerTitle, { color: text }]}>Πρόοδος</ThemedText>
         </View>
 
         {/* ── Error ── */}
         {!!error && (
-          <View style={styles.errorBox}>
+          <View style={[styles.errorBox, { backgroundColor: 'rgba(248,113,113,0.08)', borderColor: 'rgba(248,113,113,0.30)' }]}>
             <ThemedText style={styles.errorText}>{error}</ThemedText>
           </View>
         )}
 
-        {/* ── Main tabs ── */}
+        {/* ── Tabs ── */}
         <View style={[styles.tabsRow, { backgroundColor: surface, borderColor: border }]}>
           {(['overall', 'by-subject'] as TabKey[]).map((tab) => {
             const active = activeTab === tab;
@@ -169,7 +162,7 @@ export default function ProgressScreen() {
                 style={({ pressed }) => [
                   styles.tabBtn,
                   active && { backgroundColor: tint },
-                  pressed && { opacity: 0.82 },
+                  pressed && { opacity: 0.80 },
                 ]}
               >
                 <ThemedText style={[styles.tabText, { color: active ? '#fff' : muted }]}>
@@ -180,16 +173,12 @@ export default function ProgressScreen() {
           })}
         </View>
 
-        {/* ── Subject selector: plain underline tabs, no bubbles ── */}
+        {/* ── Subject selector ── */}
         {activeTab === 'by-subject' && (
           <View style={[styles.subjectBar, { borderBottomColor: border }]}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.subjectBarInner}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subjectBarInner}>
               {subjectOptions.length === 0 ? (
-                <ThemedText style={[styles.emptyText, { color: muted }]}>
+                <ThemedText style={[styles.subjectEmptyText, { color: muted }]}>
                   Δεν υπάρχουν μαθήματα με βαθμούς.
                 </ThemedText>
               ) : subjectOptions.map((s) => {
@@ -203,10 +192,7 @@ export default function ProgressScreen() {
                     <ThemedText style={[styles.subjectTabText, { color: active ? tint : muted }]}>
                       {s.name}
                     </ThemedText>
-                    <View style={[
-                      styles.subjectUnderline,
-                      { backgroundColor: active ? tint : 'transparent' },
-                    ]} />
+                    <View style={[styles.subjectUnderline, { backgroundColor: active ? tint : 'transparent' }]} />
                   </Pressable>
                 );
               })}
@@ -214,17 +200,24 @@ export default function ProgressScreen() {
           </View>
         )}
 
-        {/* ── Summary card ── */}
-        <View style={[styles.summaryCard, { backgroundColor: surface, borderColor: border }]}>
-          <View style={styles.summaryLeft}>
-            <ThemedText style={[styles.summaryLabel, { color: muted }]}>Μέσος όρος</ThemedText>
-            <ThemedText style={[styles.summaryCount, { color: muted }]}>
-              {gradedCount} {gradedCount === 1 ? 'διαγώνισμα' : 'διαγωνίσματα'}
+        {/* ── Stats strip ── */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statBox, { backgroundColor: surface, borderColor: border }]}>
+            <ThemedText style={[styles.statLabel, { color: muted }]}>Μέσος όρος</ThemedText>
+            <ThemedText style={[styles.statValue, { color: avgColor }]}>
+              {avgGrade !== null ? avgGrade.toFixed(1) : '—'}
             </ThemedText>
           </View>
-          <ThemedText style={[styles.summaryValue, { color: avgColor }]}>
-            {avgGrade !== null ? avgGrade.toFixed(1) : '—'}
-          </ThemedText>
+          <View style={[styles.statBox, { backgroundColor: surface, borderColor: border }]}>
+            <ThemedText style={[styles.statLabel, { color: muted }]}>Καλύτερη</ThemedText>
+            <ThemedText style={[styles.statValue, { color: bestColor }]}>
+              {bestGrade !== null ? bestGrade.toFixed(1) : '—'}
+            </ThemedText>
+          </View>
+          <View style={[styles.statBox, { backgroundColor: surface, borderColor: border }]}>
+            <ThemedText style={[styles.statLabel, { color: muted }]}>Σύνολο</ThemedText>
+            <ThemedText style={[styles.statValue, { color: text }]}>{gradedCount}</ThemedText>
+          </View>
         </View>
 
         {/* ── Chart ── */}
@@ -235,45 +228,48 @@ export default function ProgressScreen() {
         {/* ── Grades list ── */}
         <View style={[styles.listCard, { backgroundColor: surface, borderColor: border }]}>
           {loading ? (
-            <View style={styles.centeredBox}>
+            <View style={styles.placeholder}>
               <ActivityIndicator color={tint} size="small" />
-              <ThemedText style={[styles.centeredText, { color: muted }]}>Φόρτωση βαθμών…</ThemedText>
+              <ThemedText style={[styles.placeholderText, { color: muted }]}>Φόρτωση βαθμών…</ThemedText>
             </View>
           ) : reversedGrades.length === 0 ? (
-            <View style={styles.centeredBox}>
-              <ThemedText style={[styles.centeredText, { color: muted }]}>
+            <View style={styles.placeholder}>
+              <ThemedText style={[styles.placeholderText, { color: muted }]}>
                 Δεν υπάρχουν βαθμοί για τα επιλεγμένα κριτήρια.
               </ThemedText>
             </View>
           ) : (
-            <View style={{ paddingVertical: Spacing.xs }}>
-              {reversedGrades.map((item, index) => {
-                const gc = gradeColor(item.grade, tint);
-                return (
-                  <React.Fragment key={item.id}>
-                    {index > 0 && <View style={[styles.sep, { backgroundColor: border }]} />}
-                    <View style={styles.gradeRow}>
+            reversedGrades.map((item, index) => {
+              const gc = gradeColor(item.grade, tint);
+              return (
+                <React.Fragment key={item.id}>
+                  {index > 0 && <View style={[styles.sep, { backgroundColor: border }]} />}
+                  <View style={styles.gradeRow}>
+                    <View style={[styles.accentBar, { backgroundColor: gc }]} />
+                    <View style={styles.gradeRowBody}>
                       <View style={styles.gradeRowLeft}>
-                        <ThemedText style={[styles.gradeRowTitle, { color: text }]} numberOfLines={1}>
+                        <ThemedText style={[styles.gradeTitle, { color: text }]} numberOfLines={1}>
                           {item.test_name ?? 'Διαγώνισμα'}
                         </ThemedText>
-                        <ThemedText style={[styles.gradeRowSub, { color: muted }]} numberOfLines={1}>
-                          {item.subject_name ?? '—'}{item.class_title ? ` · ${item.class_title}` : ''}
-                        </ThemedText>
-                        <ThemedText style={[styles.gradeRowMeta, { color: muted }]}>
+                        {(item.subject_name || item.class_title) && (
+                          <ThemedText style={[styles.gradeSub, { color: muted }]} numberOfLines={1}>
+                            {item.subject_name ?? '—'}{item.class_title ? ` · ${item.class_title}` : ''}
+                          </ThemedText>
+                        )}
+                        <ThemedText style={[styles.gradeDate, { color: muted }]}>
                           {formatDate(item.test_date)}
-                          {item.start_time ? ` · ${formatTime(item.start_time)}` : ''}
-                          {item.end_time   ? `–${formatTime(item.end_time)}`    : ''}
                         </ThemedText>
                       </View>
-                      <ThemedText style={[styles.gradePillText, { color: gc }]}>
-                        {typeof item.grade === 'number' ? item.grade.toFixed(1) : '—'}
-                      </ThemedText>
+                      <View style={[styles.gradeBadge, { backgroundColor: gc + '18' }]}>
+                        <ThemedText style={[styles.gradeBadgeText, { color: gc }]}>
+                          {typeof item.grade === 'number' ? item.grade.toFixed(1) : '—'}
+                        </ThemedText>
+                      </View>
                     </View>
-                  </React.Fragment>
-                );
-              })}
-            </View>
+                  </View>
+                </React.Fragment>
+              );
+            })
           )}
         </View>
 
@@ -283,90 +279,88 @@ export default function ProgressScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
+  screen: { flex: 1 },
   scrollContent: {
-    padding: Spacing.lg,
+    padding:    Spacing.lg,
     paddingTop: Platform.select({ ios: 56, default: Spacing.xl }),
     paddingBottom: Spacing.xl,
+    gap: Spacing.md,
   },
 
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
+  header: { marginBottom: Spacing.xs },
+  headerTitle: { fontSize: 26, fontWeight: '800', letterSpacing: -0.6 },
+
   errorBox: {
-    padding: Spacing.md, borderRadius: Radius.lg, marginBottom: Spacing.md,
-    backgroundColor: 'rgba(248,113,113,0.10)',
-    borderWidth: 1, borderColor: 'rgba(248,113,113,0.40)',
+    padding: Spacing.md, borderRadius: Radius.lg,
+    borderWidth: 1,
   },
   errorText: { fontSize: 13, fontWeight: '600', color: '#F87171' },
 
+  // ── Tabs ─────────────────────────────────────────────────────────────────────
   tabsRow: {
     flexDirection: 'row', borderRadius: Radius.xl,
-    borderWidth: StyleSheet.hairlineWidth, padding: 4,
-    marginBottom: Spacing.md, gap: 4,
+    borderWidth: StyleSheet.hairlineWidth, padding: 4, gap: 4,
   },
-  tabBtn: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: Radius.lg },
+  tabBtn:  { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: Radius.lg },
   tabText: { fontSize: 13, fontWeight: '700' },
 
-  // ── Underline subject bar ─────────────────────────────────────────────────
-  subjectBar: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    marginBottom:      Spacing.md,
-  },
-  subjectBarInner: {
-    flexDirection: 'row',
-    paddingHorizontal: 2,
-  },
+  // ── Subject tabs ─────────────────────────────────────────────────────────────
+  subjectBar:      { borderBottomWidth: StyleSheet.hairlineWidth },
+  subjectBarInner: { flexDirection: 'row', paddingHorizontal: 2 },
   subjectTab: {
     paddingHorizontal: Spacing.md,
     paddingTop:        Spacing.sm,
     paddingBottom:     0,
     alignItems:        'center',
   },
-  subjectTabText: {
-    fontSize:     13,
-    fontWeight:   '600',
-    marginBottom: 8,
-  },
-  // 2px line flush with the bar border
-  subjectUnderline: {
-    height:       2.5,
-    width:        '100%',
-    borderRadius: 2,
-    marginBottom: -StyleSheet.hairlineWidth,
-  },
-  emptyText: { fontSize: 12, fontWeight: '500', paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md },
+  subjectTabText:    { fontSize: 13, fontWeight: '600', marginBottom: 8 },
+  subjectUnderline:  { height: 2.5, width: '100%', borderRadius: 2, marginBottom: -StyleSheet.hairlineWidth },
+  subjectEmptyText:  { fontSize: 12, fontWeight: '500', paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md },
 
-  summaryCard: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderRadius: Radius.xl, borderWidth: StyleSheet.hairlineWidth,
-    padding: Spacing.lg, marginBottom: Spacing.md,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,
+  // ── Stats ────────────────────────────────────────────────────────────────────
+  statsRow: { flexDirection: 'row', gap: Spacing.sm },
+  statBox: {
+    flex: 1, alignItems: 'center', paddingVertical: Spacing.md,
+    borderRadius: Radius.lg, borderWidth: StyleSheet.hairlineWidth,
+    gap: 4,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  summaryLeft:  { gap: 3 },
-  summaryLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 0.2 },
-  summaryCount: { fontSize: 11, fontWeight: '500' },
-  summaryValue: { fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
+  statLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 0.1 },
+  statValue: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
 
-  chartWrap: { marginBottom: Spacing.md },
+  chartWrap: {},
 
+  // ── Grade list ───────────────────────────────────────────────────────────────
   listCard: {
     borderRadius: Radius.xl, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden',
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  centeredBox:  { paddingVertical: Spacing.xl, alignItems: 'center', gap: Spacing.sm },
-  centeredText: { fontSize: 13, fontWeight: '500', textAlign: 'center' },
-  sep:          { height: StyleSheet.hairlineWidth, marginHorizontal: Spacing.lg },
+  placeholder: {
+    paddingVertical: Spacing.xl, alignItems: 'center',
+    gap: Spacing.sm, paddingHorizontal: Spacing.lg,
+  },
+  placeholderText: { fontSize: 13, fontWeight: '500', textAlign: 'center' },
 
-  gradeRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg, gap: Spacing.md,
+  sep: { height: StyleSheet.hairlineWidth },
+
+  gradeRow: { flexDirection: 'row', alignItems: 'stretch' },
+  accentBar: { width: 3 },
+  gradeRowBody: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.md,
+    gap: Spacing.md,
   },
-  gradeRowLeft:  { flex: 1, gap: 2 },
-  gradeRowTitle: { fontSize: 14, fontWeight: '700', letterSpacing: -0.1 },
-  gradeRowSub:   { fontSize: 12, fontWeight: '500' },
-  gradeRowMeta:  { fontSize: 11, fontWeight: '400', marginTop: 1 },
-  gradePillText: { fontSize: 12, fontWeight: '700', letterSpacing: -0.1 },
+  gradeRowLeft: { flex: 1, gap: 3 },
+  gradeTitle:   { fontSize: 14, fontWeight: '700', letterSpacing: -0.1 },
+  gradeSub:     { fontSize: 12, fontWeight: '500' },
+  gradeDate:    { fontSize: 11, fontWeight: '400' },
+
+  gradeBadge: {
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: Radius.sm, alignItems: 'center', justifyContent: 'center',
+    minWidth: 48,
+  },
+  gradeBadgeText: { fontSize: 15, fontWeight: '800', letterSpacing: -0.3 },
 });

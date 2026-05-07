@@ -1,11 +1,13 @@
 // app/messages/index.tsx
 import { router, Stack, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, RefreshCw, Send } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  KeyboardAvoidingView,
+  Keyboard,
+  type KeyboardEvent,
   Platform,
   Pressable,
   StyleSheet,
@@ -16,7 +18,6 @@ import {
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Radius, Spacing } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { supabase } from '@/lib/supabaseClient';
@@ -70,6 +71,7 @@ function getInitials(name: string): string {
 }
 
 export default function MessagesScreen() {
+  const insets  = useSafeAreaInsets();
   const bg      = useThemeColor({}, 'background');
   const surface = useThemeColor({}, 'surface');
   const text    = useThemeColor({}, 'text');
@@ -77,6 +79,7 @@ export default function MessagesScreen() {
   const tint    = useThemeColor({}, 'tint');
   const border  = useThemeColor({}, 'border');
 
+  const [kbHeight,   setKbHeight]   = useState(0);
   const [loading,    setLoading]    = useState(true);
   const [threadId,   setThreadId]   = useState<string | null>(null);
   const [threadMeta, setThreadMeta] = useState<ThreadMeta | null>(null);
@@ -92,6 +95,22 @@ export default function MessagesScreen() {
     () => draft.trim().length > 0 && !sending && !!threadId && !!threadMeta,
     [draft, sending, threadId, threadMeta],
   );
+
+  useEffect(() => {
+    const onShow = (e: KeyboardEvent) => {
+      setKbHeight(Math.max(0, e.endCoordinates.height - insets.bottom));
+      setTimeout(() => scrollToBottom(false), 50);
+    };
+    const onHide = () => setKbHeight(0);
+
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', onShow,
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', onHide,
+    );
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   const scrollToBottom = (animated: boolean) => {
     requestAnimationFrame(() => {
@@ -329,7 +348,7 @@ export default function MessagesScreen() {
   };
 
   return (
-    <ThemedView style={[styles.screen, { backgroundColor: bg }]}>
+    <View style={[styles.screen, { backgroundColor: bg, paddingBottom: kbHeight }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* ── Header ── */}
@@ -380,44 +399,41 @@ export default function MessagesScreen() {
             onScroll={onListScroll}
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps="handled"
           />
         )}
       </View>
 
-      {/* ── Composer — moves up with keyboard ── */}
-      <KeyboardAvoidingView
-        behavior={Platform.select({ ios: 'padding', android: 'height' })}
-        keyboardVerticalOffset={Platform.select({ ios: 0, android: 0 })}
-      >
-        <View style={[styles.composer, { borderTopColor: border, backgroundColor: bg }]}>
-          <TextInput
-            value={draft}
-            onChangeText={setDraft}
-            placeholder="Γράψε μήνυμα…"
-            placeholderTextColor={muted}
-            style={[styles.input, { color: text, backgroundColor: surface, borderColor: border }]}
-            multiline
-          />
-          <Pressable
-            onPress={sendMessage}
-            disabled={!canSend}
-            style={({ pressed }) => [
-              styles.sendBtn,
-              {
-                backgroundColor: canSend ? tint : 'transparent',
-                borderColor:     canSend ? tint : border,
-                opacity:         canSend ? (pressed ? 0.80 : 1) : 0.38,
-              },
-            ]}
-          >
-            {sending
-              ? <ActivityIndicator color={canSend ? '#fff' : tint} size="small" />
-              : <Send size={16} color={canSend ? '#fff' : muted} strokeWidth={2.2} />
-            }
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </ThemedView>
+      {/* ── Composer ── */}
+      <View style={[styles.composer, { borderTopColor: border, backgroundColor: bg }]}>
+        <TextInput
+          value={draft}
+          onChangeText={setDraft}
+          placeholder="Γράψε μήνυμα…"
+          placeholderTextColor={muted}
+          style={[styles.input, { color: text, backgroundColor: surface, borderColor: border }]}
+          multiline
+        />
+        <Pressable
+          onPress={sendMessage}
+          disabled={!canSend}
+          style={({ pressed }) => [
+            styles.sendBtn,
+            {
+              backgroundColor: canSend ? tint : 'transparent',
+              borderColor:     canSend ? tint : border,
+              opacity:         canSend ? (pressed ? 0.80 : 1) : 0.38,
+            },
+          ]}
+        >
+          {sending
+            ? <ActivityIndicator color={canSend ? '#fff' : tint} size="small" />
+            : <Send size={16} color={canSend ? '#fff' : muted} strokeWidth={2.2} />
+          }
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
