@@ -3,7 +3,25 @@
     "allow": [
       "Bash(ls -la \"/c/Users/KOSTAS/Desktop/Projects/ProfessorTec/professortec-mobile/app/\\(tabs\\)/\")",
       "Bash(find /c/Users/KOSTAS/Desktop/Projects/ProfessorTec/professortec-mobile -name *.sql -o -name migrations -o -name schema*)",
-      "Bash(cat \"/c/Users/KOSTAS/Desktop/Projects/ProfessorTec/professortec-mobile/app/\\(tabs\\)/progress.tsx\")"
+      "Bash(cat \"/c/Users/KOSTAS/Desktop/Projects/ProfessorTec/professortec-mobile/app/\\(tabs\\)/progress.tsx\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\" -Recurse -Force)",
+      "Bash(Select-Object -First 50)",
+      "Bash(Format-Table Name, FullName)",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "Bash(xargs grep -l \"signUp\\\\|signup\\\\|register\\\\|onboard\")",
+      "Bash(powershell -Command \"ls 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile' | head -30\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\app' -Recurse -Include '*.tsx' -Include '*.ts' | Select-Object -ExpandProperty FullName\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\app' -Recurse -Include @\\('*.tsx','*.ts'\\) | Select-Object -ExpandProperty FullName\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\components' -Recurse -Include @\\('*.tsx','*.ts'\\) | Select-Object -ExpandProperty FullName\")",
+      "Bash(powershell -Command \"grep -r 'auth_user_id' 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile' --include='*.tsx' --include='*.ts' | grep -v node_modules\")",
+      "Bash(powershell -Command \"grep -r 'signUp\\\\|signup\\\\|create.*account\\\\|register' 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile' --include='*.tsx' --include='*.ts' | grep -v node_modules\")",
+      "Bash(powershell -Command \"grep -r 'supabase.auth' 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\app' --include='*.tsx' --include='*.ts'\")",
+      "Bash(powershell -Command \"grep -r 'supabase.auth' 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\context' --include='*.tsx' --include='*.ts'\")",
+      "Bash(powershell -Command \"grep -r 'supabase.auth' 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\components' --include='*.tsx' --include='*.ts'\")",
+      "Bash(powershell -Command \"grep -r 'students\\\\|student_id\\\\|get_or_create\\\\|rpc' 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile' --include='*.tsx' --include='*.ts' | grep -v node_modules | head -30\")",
+      "Bash(powershell -Command \"ls -Recurse 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\.claude' -Include '*.md' -Include '*.txt' -Include '*.json' 2>/dev/null\")",
+      "Bash(powershell -Command \"grep -r 'useEffect' 'c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\app' --include='*.tsx' | head -10\")"
     ]
   }
 }
