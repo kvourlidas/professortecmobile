@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "671260501378",
+    "project_id": "edra-996a7",
+    "storage_bucket": "edra-996a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:671260501378:android:108ffe6ecf64744427db9b",
+        "android_client_info": {
+          "package_name": "com.nvourlidas.edra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYhfnl_xkDuUZ2WttdbPGr0GP_Xy6TUUg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

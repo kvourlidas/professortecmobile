@@ -1,22 +1,27 @@
 {
   "expo": {
-    "name": "professortec-mobile",
-    "slug": "professortec-mobile",
+    "name": "Edra",
+    "slug": "edra",
     "version": "1.0.0",
+    "owner": "nvourlidas",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "professortecmobile",
+    "icon": "./assets/images/edra-primary-dark.png",
+    "scheme": "edra",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nvourlidas.edra",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
+      "package": "com.nvourlidas.edra",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/edra-primary-dark.png",
+        "backgroundImage": "./assets/images/edra-primary-dark.png",
+        "monochromeImage": "./assets/images/edra-primary-dark.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -28,9 +33,17 @@
     "plugins": [
       "expo-router",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/edra-primary-dark.png",
+          "color": "#E6F4FE",
+          "androidMode": "default"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/edra-primary-transparent-dark(PNG).png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -43,6 +56,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fac90460-3320-41f7-8e25-f7bab914a64b"
+      }
     }
   }
 }
