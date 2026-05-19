@@ -2,30 +2,41 @@
 import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
+import { supabase } from '@/lib/supabaseClient';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-export default function RootLayout() {
-  usePushNotifications();
+function AppContent() {
+  const { user } = useAuth();
+  const { expoPushToken } = usePushNotifications();
   const colorScheme = useColorScheme();
   const scheme      = colorScheme ?? 'light';
   const C           = Colors[scheme];
+
+  useEffect(() => {
+    if (!user || !expoPushToken) return;
+    supabase
+      .from('students')
+      .update({ expo_push_token: expoPushToken })
+      .eq('auth_user_id', user.id);
+  }, [user?.id, expoPushToken]);
 
   const navTheme = {
     dark: scheme === 'dark',
     colors: {
       primary:      C.tint,
       background:   C.background,
-      card:         C.surface,       // header / modal cards match surface
+      card:         C.surface,
       text:         C.text,
       border:       C.border,
       notification: C.tint,
@@ -34,31 +45,36 @@ export default function RootLayout() {
   };
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider value={navTheme as any}>
-        <SafeAreaView
-          style={{ flex: 1, backgroundColor: C.background }}
-          edges={['top', 'left', 'right']}
+    <ThemeProvider value={navTheme as any}>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: C.background }}
+        edges={['top', 'left', 'right']}
+      >
+        <Stack
+          screenOptions={{
+            headerStyle:      { backgroundColor: C.surface },
+            headerTintColor:  C.tint,
+            headerTitleStyle: { color: C.text, fontWeight: '700', fontSize: 16 },
+            headerShadowVisible: false,
+            contentStyle:     { backgroundColor: C.background },
+          }}
         >
-          <AuthProvider>
-            <Stack
-              screenOptions={{
-                // Shared defaults for all pushed screens
-                headerStyle:      { backgroundColor: C.surface },
-                headerTintColor:  C.tint,
-                headerTitleStyle: { color: C.text, fontWeight: '700', fontSize: 16 },
-                headerShadowVisible: false,
-                contentStyle:     { backgroundColor: C.background },
-              }}
-            >
-              <Stack.Screen name="(auth)"          options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)"          options={{ headerShown: false }} />
-              <Stack.Screen name="notifications"   options={{ headerShown: false }} />
-            </Stack>
-          </AuthProvider>
-        </SafeAreaView>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      </ThemeProvider>
+          <Stack.Screen name="(auth)"          options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)"          options={{ headerShown: false }} />
+          <Stack.Screen name="notifications"   options={{ headerShown: false }} />
+        </Stack>
+      </SafeAreaView>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
