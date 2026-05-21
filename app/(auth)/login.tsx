@@ -1,6 +1,7 @@
 // app/(auth)/login.tsx
 import { supabase } from '@/lib/supabaseClient';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
     Alert,
@@ -19,6 +20,7 @@ const LOGO = require('@/assets/images/edra-primary-transparent-dark(PNG).png');
 export default function LoginScreen() {
   const [email,   setEmail]   = useState('');
   const [pw,      setPw]      = useState('');
+  const [showPw,  setShowPw]  = useState(false);
   const [pending, setPending] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
@@ -38,6 +40,20 @@ export default function LoginScreen() {
         setError('Λάθος στοιχεία σύνδεσης.');
         return;
       }
+
+      // Ensure this auth account has a linked student record.
+      const { data: student } = await supabase
+        .from('students')
+        .select('id')
+        .eq('auth_user_id', data.session.user.id)
+        .maybeSingle();
+
+      if (!student) {
+        await supabase.auth.signOut();
+        setError('Λάθος στοιχεία σύνδεσης.');
+        return;
+      }
+
       router.replace('/(tabs)/home');
     } catch {
       setError('Κάτι πήγε στραβά. Δοκίμασε ξανά.');
@@ -131,22 +147,41 @@ export default function LoginScreen() {
             <Text style={{ color: 'rgba(226,232,240,0.9)', fontSize: 12, marginBottom: 6 }}>
               Κωδικός
             </Text>
-            <TextInput
-              value={pw}
-              onChangeText={setPw}
-              secureTextEntry
-              placeholder="••••••"
-              placeholderTextColor="rgba(148,163,184,0.7)"
-              style={{
-                color:             'white',
-                borderWidth:       1,
-                borderColor:       'rgba(148,163,184,0.25)',
-                borderRadius:      12,
-                paddingHorizontal: 12,
-                paddingVertical:   10,
-                backgroundColor:   'rgba(2,6,23,0.35)',
-              }}
-            />
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                value={pw}
+                onChangeText={setPw}
+                secureTextEntry={!showPw}
+                placeholder="••••••"
+                placeholderTextColor="rgba(148,163,184,0.7)"
+                style={{
+                  color:             'white',
+                  borderWidth:       1,
+                  borderColor:       'rgba(148,163,184,0.25)',
+                  borderRadius:      12,
+                  paddingHorizontal: 12,
+                  paddingVertical:   10,
+                  paddingRight:      44,
+                  backgroundColor:   'rgba(2,6,23,0.35)',
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPw(v => !v)}
+                style={{
+                  position:       'absolute',
+                  right:          12,
+                  top:            0,
+                  bottom:         0,
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons
+                  name={showPw ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color="rgba(148,163,184,0.7)"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* ── Submit ── */}

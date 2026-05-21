@@ -16,20 +16,26 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+// Only mounted after the user is authenticated — prevents the push-permission
+// dialog from racing with auth session initialisation and causing RPC failures.
+function PushNotificationRegistrar({ userId }: { userId: string }) {
+  const { expoPushToken } = usePushNotifications();
+
+  useEffect(() => {
+    if (!expoPushToken) return;
+    (async () => {
+      await supabase.rpc('update_my_push_token', { p_token: expoPushToken });
+    })();
+  }, [userId, expoPushToken]);
+
+  return null;
+}
+
 function AppContent() {
   const { user } = useAuth();
-  const { expoPushToken } = usePushNotifications();
   const colorScheme = useColorScheme();
   const scheme      = colorScheme ?? 'light';
   const C           = Colors[scheme];
-
-  useEffect(() => {
-    if (!user || !expoPushToken) return;
-    supabase
-      .from('students')
-      .update({ expo_push_token: expoPushToken })
-      .eq('auth_user_id', user.id);
-  }, [user?.id, expoPushToken]);
 
   const navTheme = {
     dark: scheme === 'dark',
@@ -46,6 +52,7 @@ function AppContent() {
 
   return (
     <ThemeProvider value={navTheme as any}>
+      {user && <PushNotificationRegistrar userId={user.id} />}
       <SafeAreaView
         style={{ flex: 1, backgroundColor: C.background }}
         edges={['top', 'left', 'right']}

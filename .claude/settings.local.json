@@ -26,7 +26,12 @@
       "mcp__claude_ai_Supabase__list_tables",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\" -Force)",
       "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\({expo: p.dependencies['expo'], 'expo-notifications': p.dependencies['expo-notifications']}, null, 2\\)\\)\")",
-      "Bash(Test-Path \"c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\node_modules\\\\expo-notifications\")"
+      "Bash(Test-Path \"c:\\\\Users\\\\KOSTAS\\\\Desktop\\\\Projects\\\\ProfessorTec\\\\professortec-mobile\\\\node_modules\\\\expo-notifications\")",
+      "Bash(findstr -i \"icon\")",
+      "Bash(xargs grep -l \"student.*push\\\\|push.*token\\\\|register.*push\")",
+      "Bash(xargs grep -l \"rpc\\\\|edge.*function\")",
+      "Bash(xargs grep -l \"rpc\\\\|RPC\")",
+      "Bash(xargs grep -l \"get_or_create_message_thread\\\\|get_my_student_feedback\\\\|submit_student_feedback\\\\|student_mark_thread_read\")"
     ]
   }
 }

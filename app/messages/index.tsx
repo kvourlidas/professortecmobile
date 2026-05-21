@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   Keyboard,
-  type KeyboardEvent,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
@@ -79,7 +79,6 @@ export default function MessagesScreen() {
   const tint    = useThemeColor({}, 'tint');
   const border  = useThemeColor({}, 'border');
 
-  const [kbHeight,   setKbHeight]   = useState(0);
   const [loading,    setLoading]    = useState(true);
   const [threadId,   setThreadId]   = useState<string | null>(null);
   const [threadMeta, setThreadMeta] = useState<ThreadMeta | null>(null);
@@ -97,19 +96,11 @@ export default function MessagesScreen() {
   );
 
   useEffect(() => {
-    const onShow = (e: KeyboardEvent) => {
-      setKbHeight(Math.max(0, e.endCoordinates.height - insets.bottom));
-      setTimeout(() => scrollToBottom(false), 50);
-    };
-    const onHide = () => setKbHeight(0);
-
-    const showSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', onShow,
+    const sub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setTimeout(() => scrollToBottom(false), 50),
     );
-    const hideSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', onHide,
-    );
-    return () => { showSub.remove(); hideSub.remove(); };
+    return () => sub.remove();
   }, []);
 
   const scrollToBottom = (animated: boolean) => {
@@ -348,7 +339,7 @@ export default function MessagesScreen() {
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: bg, paddingBottom: kbHeight }]}>
+    <View style={[styles.screen, { backgroundColor: bg }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* ── Header ── */}
@@ -376,6 +367,10 @@ export default function MessagesScreen() {
         </Pressable>
       </View>
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       {/* ── Message list ── */}
       <View style={styles.listWrap}>
         {loading ? (
@@ -406,7 +401,7 @@ export default function MessagesScreen() {
       </View>
 
       {/* ── Composer ── */}
-      <View style={[styles.composer, { borderTopColor: border, backgroundColor: bg }]}>
+      <View style={[styles.composer, { borderTopColor: border, backgroundColor: bg, paddingBottom: Math.max(insets.bottom, Spacing.sm) }]}>
         <TextInput
           value={draft}
           onChangeText={setDraft}
@@ -433,6 +428,7 @@ export default function MessagesScreen() {
           }
         </Pressable>
       </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }

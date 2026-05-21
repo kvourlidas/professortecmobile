@@ -2,7 +2,8 @@
 import { Tabs } from 'expo-router';
 import { CalendarDays, Home, TrendingUp, User } from 'lucide-react-native';
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
@@ -11,6 +12,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? 'light';
   const C = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -24,10 +26,9 @@ export default function TabLayout() {
           backgroundColor: C.surface,
           borderTopColor:  C.border,
           borderTopWidth:  StyleSheet.hairlineWidth,
-          height:          Platform.select({ ios: 84, android: 64, default: 64 }),
-          paddingBottom:   Platform.select({ ios: 24, android: 8, default: 8 }),
+          height:          56 + insets.bottom,
+          paddingBottom:   insets.bottom,
           paddingTop:      8,
-          // subtle shadow lifting it off the screen
           shadowColor:   '#000',
           shadowOpacity: colorScheme === 'dark' ? 0.35 : 0.08,
           shadowRadius:  16,
